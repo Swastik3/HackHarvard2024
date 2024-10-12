@@ -1,4 +1,4 @@
-from gemini_beater import flash_inferencer
+from gemini_beater import flash_inference
 
 def get_takeaways(data) -> str:
     prompt = """
@@ -7,7 +7,7 @@ def get_takeaways(data) -> str:
 
     takeaway:
 """
-    response = flash_inferencer(prompt.format(data=data))
+    response = flash_inference(prompt.format(data=data))
     #cleaning the response and remove everything except the whitespace, commas and words
     response = ''.join(e for e in response.text if e.isalnum() or e.isspace() or e == ',')
     takeaways = response.split(',')
