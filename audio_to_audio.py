@@ -233,6 +233,5 @@ def record_and_stream_audio():
 if __name__ == "__main__":
     # Start the WebSocket server
     start_websocket_server()
-
     # Record and stream audio
-    record_and_stream_audio()
+    #
