@@ -101,7 +101,7 @@ function PersonalGoals() {
           />
           <button
             onClick={handleAddGoal}
-            className="px-4 py-2 bg-gradient-to-r from-primary-light to-secondary text-white rounded-md hover:opacity-90 transition-opacity"
+            className="px-4 py-2 bg-gradient-to-tr from-primary-light to-secondary text-white rounded-md hover:opacity-90 transition-opacity"
           >
             Add Goal
           </button>
@@ -135,7 +135,7 @@ function PersonalGoals() {
         <div className="mb-4">
           <button
             onClick={handleMoodSubmit}
-            className="px-4 py-2 bg-gradient-to-r from-primary-light to-secondary text-white rounded-md hover:opacity-90 transition-opacity"
+            className="px-4 py-2 bg-gradient-to-tr from-primary-light to-secondary text-white rounded-md hover:opacity-90 transition-opacity"
           >
             Log Today's Mood
           </button>

@@ -50,7 +50,7 @@ function ChatBot() {
         />
         <button
           onClick={handleSend}
-          className="ml-3 px-6 py-3 bg-gradient-to-r from-primary-light to-secondary text-white rounded-full hover:opacity-90 transition-opacity"
+          className="ml-3 px-6 py-3 bg-gradient-to-tr from-primary-light to-secondary text-white rounded-full hover:opacity-90 transition-opacity"
         >
           Send
         </button>
