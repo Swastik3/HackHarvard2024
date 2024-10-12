@@ -1,0 +1,141 @@
+{
+    "Abortion": [
+    ["National Domestic Violence Hotline", "1-800-799-SAFE"],
+    ["Post Abortion Counseling", "1-800-228-0332"],
+    ["Post Abortion Project Rachel", "1-800-5WE-CARE"],
+    ["National Abortion Federation Hotline", "1-800-772-9100"],
+    ["National Office of Post Abortion Trauma", "1-800-593-2273"]
+    ],
+    "Abuse": [
+    ["National Sexual Assault Hotline", "1-800-656-HOPE"],
+    ["Stop it Now!", "1-888-PREVENT"],
+    ["United States Elder Abuse Hotline", "1-866-363-4276"],
+    ["National Child Abuse Hotline", "1-800-4-A-CHILD"],
+    ["Child Abuse Hotline / Dept of Social Services", "1-800-342-3720"],
+    ["Child Abuse National Hotline", "1-800-25ABUSE"],
+    ["Children in immediate danger", "1-800-THE-LOST"],
+    ["Exploitation of Children", "1-800-843-5678"],
+    ["Missing Children Help Center", "1-800-872-5437"]
+    ],
+    "Addiction": [
+    ["Marijuana Anonymous", "1-800-766-6779"],
+    ["Alcohol Treatment Referral Hotline", "1-800-252-6465"],
+    ["Families Anonymous", "1-800-736-9805"],
+    ["Cocaine Hotline", "1-800-262-2463"],
+    ["Drug Abuse National Helpline", "1-800-662-4357"],
+    ["National Association for Children of Alcoholics", "1-888-554-2627"],
+    ["Ecstasy Addiction", "1-800-468-6933"],
+    ["Alcoholics for Christ", "1-800-441-7877"]
+    ],
+    "Cancer": [
+    ["American Cancer Society", "1-800-227-2345"],
+    ["National Cancer institute", "1-800-422-6237"]
+    ],
+    "Care Givers": [
+    ["Elder Care Locator", "1-800-677-1116"],
+    ["Well Spouse Foundation", "1-800-838-0879"]
+    ],
+    "Christian Counseling": [
+    ["New Life Clinics", "1-800-NEW-LIFE"],
+    ["National Prayer Line", "1-800-4-PRAYER"],
+    ["Bethany Lifeline Pregnancy Hotline", "1-800-BETHANY"],
+    ["Liberty Godparent Ministry", "1-800-368-3336"],
+    ["Grace Help Line 24 Hour Christian service", "1-800-982-8032"],
+    ["The 700 Club Hotline", "1-800-759-0700"],
+    ["Want to know Jesus?", "1-800-NEED-HIM"],
+    ["Biblical help for youth in crisis", "1-800-HIT-HOME"],
+    ["Rapha National Network", "1-800-383-HOPE"],
+    ["Emerge Ministries", "330-867-5603"],
+    ["Meier Clinics", "1-888-7-CLINIC"],
+    ["Association of Christian Counselors", "1-800-526-8673"],
+    ["Minirth Clinic", "1-888-MINIRTH"],
+    ["Pine Rest", "1-800-678-5500"],
+    ["Timberline Knolls", "1-877-257-9611"],
+    ["Focus on the Family", "1-855-771-HELP"]
+    ],
+    "Chronic Illness/Pain": [
+    ["Rest Ministries", "1-888-751-REST"],
+    ["Watchman Fellowship", "1-817-277-0023"]
+    ],
+    "Crisis #s (Teens Under 18)": [
+    ["Girls and Boys Town", "1-800-448-3000"],
+    ["Hearing Impaired", "1-800-448-1833"],
+    ["Youth Crisis Hotline", "1-800-448-4663"],
+    ["Teen Hope Line", "1-800-394-HOPE"]
+    ],
+    "Crisis #s (Any Age)": [
+    ["United Way Crisis Helpline", "1-800-233-HELP"],
+    ["Christian Oriented Hotline", "1-877-949-HELP"],
+    ["Social Security Administration", "1-800-772-1213"]
+    ],
+    "Crisis Pregnancy Helpline": [
+    ["Crisis Pregnancy Hotline Number", "1-800-67-BABY-6"],
+    ["Liberty Godparent Ministry", "1-800-368-3336"]
+    ],
+    "Domestic Violence": [
+    ["National Domestic Violence Hotline", "1-800-799-SAFE"],
+    ["National Domestic Violence Hotline Spanish", "1-800-942-6908"],
+    ["Battered Women and their Children", "1-800-603-HELP"],
+    ["Elder Abuse Hotline", "1-800-252-8966"],
+    ["RAINN", "1-800-656-HOPE"]
+    ],
+    "Eating Disorders": [
+    ["Eating Disorders Awareness and Prevention", "1-800-931-2237"],
+    ["Eating Disorders Center", "1-888-236-1188"],
+    ["National Association of Anorexia Nervosa and Associated Disorders", "1-847-831-3438"],
+    ["Remuda Ranch", "1-800-445-1900"]
+    ],
+    "Family Violence": [
+    ["Family Violence Prevention Center", "1-800-313-1310"]
+    ],
+    "Gambling": [
+    ["Compulsive Gambling Hotline", "1-410-332-0402"]
+    ],
+    "Grief/Loss": [
+    ["GriefShare", "1-800-395-5755"]
+    ],
+    "Homeless/Shelters": [
+    ["Homeless", "1-800-231-6946"],
+    ["American Family Housing", "1-888-600-4357"]
+    ],
+    "LGBTQIA+": [
+    ["Helpline", "1-800-398-GAYS"],
+    ["Gay and Lesbian National Hotline", "1-888-843-4564"],
+    ["Trevor Hotline (Suicide)", "1-866-4-U-TREVOR"]
+    ],
+    "Parents": [
+    ["Hotline for parents considering abducting their children", "1-800-A-WAY-OUT"],
+    ["United States Missing Children Hotline", "1-800-235-3535"]
+    ],
+    "Poison": [
+    ["Poison Control", "1-800-942-5969"]
+    ],
+    "Runaways": [
+    ["Boystown National Hotline", "1-800-448-3000"],
+    ["National Runaway Safeline", "1-800-RUNAWAY"],
+    ["Laurel House", "1-714-832-0207"],
+    ["National Runaway Switchboard", "1-800-621-4000"],
+    ["Teenline", "1-888-747-TEEN"],
+    ["Youth Crisis Hotline", "1-800-448-4663"]
+    ],
+    "Salvation": [
+    ["Grace Help Line 24 Hour Christian Service", "1-800-982-8032"],
+    ["Want to know Jesus?", "1-800-NEED-HIM"]
+    ],
+    "Self-Injury": [
+    ["S.A.F.E. (Self Abuse Finally Ends)", "1-800-DONT-CUT"]
+    ],
+    "Sexual Addiction": [
+    ["Project Know", "1-888-892-1840"],
+    ["Sex Addicts Anonymous", "1-800-477-8191"]
+    ],
+    "Suicide": [
+    ["Suicide Hotline", "1-800-SUICIDE"],
+    ["Suicide Prevention Hotline", "1-800-827-7571"],
+    ["Deaf Hotline", "1-800-799-4TTY"],
+    ["Holy Spirit Teenline", "1-800-722-5385"],
+    ["Crisis Intervention (Harrisburg)", "1-888-596-4447"],
+    ["Carlisle Helpline", "717-249-6226"],
+    ["Crisis Intervention (York)", "1-800-673-2496"]
+    ]
+    }
