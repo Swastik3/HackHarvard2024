@@ -322,4 +322,6 @@ All endpoints will return appropriate HTTP status codes:
 
 7. Consider implementing real-time updates using WebSockets if you want to show new timeline entries immediately without refreshing.
 
+8. The types are: "bot", "note", "connection", "emergency". You can use these types to differentiate the timeline entries in your frontend.
+
 Remember to handle errors gracefully in your frontend application and provide appropriate feedback to the user.
