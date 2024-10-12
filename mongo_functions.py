@@ -1,7 +1,8 @@
 from pymongo import MongoClient
 from sentiment import get_sentiment
 from summary import get_summary
-from takeaways import get_takeaways  # Assumed function for takeaways
+from takeaways import get_takeaways
+from mood import get_mood
 from datetime import datetime
 import time
 
@@ -25,7 +26,8 @@ def get_prescriptions(user_id):
 def add_conversation(user_id, conversation, conversation_with, conversation_type):
     summary = get_summary(conversation)
     sentiment = get_sentiment(conversation)
-    takeaways = get_takeaways(conversation)  # Assuming it returns a list of 3 takeaways
+    mood = get_mood(conversation, sentiment)
+    takeaways = get_takeaways(conversation)
     
     conversation_data = {
         "user_id": user_id,
@@ -34,6 +36,7 @@ def add_conversation(user_id, conversation, conversation_with, conversation_type
         "content": conversation,
         "summary": summary,
         "sentiment": sentiment,
+        "mood": mood,
         "takeaways": takeaways,
         "timestamp": time.time()
     }
@@ -43,6 +46,7 @@ def add_conversation(user_id, conversation, conversation_with, conversation_type
 def add_notes(user_id, notes):
     summary = get_summary(notes)
     sentiment = get_sentiment(notes)
+    mood = get_mood(notes, sentiment)
     
     notes_data = {
         "user_id": user_id,
@@ -50,6 +54,7 @@ def add_notes(user_id, notes):
         "content": notes,
         "summary": summary,
         "sentiment": sentiment,
+        "mood": mood,
         "timestamp": time.time()
     }
     
