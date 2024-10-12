@@ -1,10 +1,5 @@
-import google.generativeai as genai
-from dotenv import load_dotenv
-import os
+from gemini_beater import flash_inference
 
-load_dotenv()
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-model = genai.GenerativeModel('gemini-1.5-flash')
 
 def get_summary(data) -> str:
     prompt = """
@@ -13,5 +8,5 @@ def get_summary(data) -> str:
 
     summarise:
 """
-    response = model.generate_content(prompt.format(data=data))
+    response = flash_inference(prompt.format(data=data))
     return response
