@@ -2,16 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 import { Audio } from 'expo-av';
-import axios from 'axios';
+import io from 'socket.io-client';
 
 const ChatScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [socket, setSocket] = useState<SocketIOClient.Socket | null>(null);
 
   useEffect(() => {
+    // Initialize the WebSocket connection
+    const newSocket = io('YOUR_SERVER_URL');
+    setSocket(newSocket);
+
     return () => {
       if (recording) {
         recording.stopAndUnloadAsync();
+      }
+      if (newSocket) {
+        newSocket.disconnect();
       }
     };
   }, []);
@@ -47,13 +55,15 @@ const ChatScreen = () => {
       allowsRecordingIOS: false,
     });
 
-    // Stop streaming audio to the server
-    // You may want to implement a way to signal the server that the stream has ended
+    // Signal the server that the stream has ended
+    if (socket) {
+      socket.emit('audio-stream-end');
+    }
   };
 
   const streamAudioToServer = async (recording: Audio.Recording) => {
-    // This is a simplified example. You'll need to implement the actual streaming logic
-    // based on your server's requirements and the audio format you're using.
+    if (!socket) return;
+
     while (isRecording) {
       const status = await recording.getStatusAsync();
       if (status.isDoneRecording) break;
@@ -61,10 +71,14 @@ const ChatScreen = () => {
       const uri = recording.getURI();
       if (uri) {
         try {
-          const response = await axios.post('YOUR_SERVER_ENDPOINT', {
-            audio: uri,
-          });
-          console.log('Server response:', response.data);
+          // Read the audio file as a binary buffer
+          const response = await fetch(uri);
+          const blob = await response.blob();
+          const arrayBuffer = await blob.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+
+          // Send the audio data to the server
+          socket.emit('audio-stream', uint8Array);
         } catch (error) {
           console.error('Error streaming audio:', error);
         }
@@ -93,26 +107,26 @@ const ChatScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: '#f5f5f5',
-    },
-    title: {
-      fontSize: 24,
-      marginBottom: 20,
-    },
-    micButtonContainer: {
-      position: 'absolute',
-      bottom: 20, // Adjust this value based on the height of your bottom navigation bar
-      alignSelf: 'center', // Center the button horizontally
-    },
-    micButton: {
-      borderRadius: 30,
-      paddingHorizontal: 20,
-      paddingVertical: 10,
-    },
-  });
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+  },
+  micButtonContainer: {
+    position: 'absolute',
+    bottom: 20, // Adjust this value based on the height of your bottom navigation bar
+    alignSelf: 'center', // Center the button horizontally
+  },
+  micButton: {
+    borderRadius: 30,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+});
 
 export default ChatScreen;
