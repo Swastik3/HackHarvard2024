@@ -9,6 +9,7 @@ const ChatScreen = () => {
   const [socket, setSocket] = useState(null);
   const recordingRef = useRef(null);
   const lastDurationRef = useRef(0);
+  const intervalRef = useRef(null);
 
   useEffect(() => {
     const newSocket = io('http://localhost:8765', {
@@ -42,8 +43,7 @@ const ChatScreen = () => {
       const audioData = await fetch(uri).then((res) => res.arrayBuffer());
       const fullAudioBuffer = new Uint8Array(audioData);
 
-      // Calculate the start index for the new chunk
-      const startIndex = Math.floor(lastDurationRef.current * 44.1); // Assuming 44.1kHz sample rate
+      const startIndex = Math.floor(lastDurationRef.current * 44.1);
       const newChunk = fullAudioBuffer.slice(startIndex);
 
       console.log(`New chunk length: ${newChunk.length} bytes`);
@@ -66,61 +66,45 @@ const ChatScreen = () => {
 
   const startRecording = async () => {
     console.log('startRecording function called');
-    await Audio.requestPermissionsAsync();
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: true,
-      playsInSilentModeIOS: true,
-    });
+    try {
+      await Audio.requestPermissionsAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
 
-    console.log('Starting recording..');
-    const recording = new Audio.Recording();
-    await recording.prepareToRecordAsync({
-      android: {
-        extension: '.m4a',
-        outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
-        audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
-        sampleRate: 44100,
-        numberOfChannels: 1,
-        bitRate: 128000,
-      },
-      ios: {
-        extension: '.m4a',
-        audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_MAX,
-        sampleRate: 44100,
-        numberOfChannels: 1,
-        bitRate: 128000,
-        linearPCMBitDepth: 16,
-        linearPCMIsBigEndian: false,
-        linearPCMIsFloat: false,
-      },
-    });
-    await recording.startAsync();
-    recordingRef.current = recording;
-    setIsRecording(true);
+      console.log('Starting recording..');
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
+      await recording.startAsync();
+      recordingRef.current = recording;
+      setIsRecording(true);
 
-    const interval = setInterval(async () => {
-      if (recordingRef.current && isRecording) {
-        const status = await recordingRef.current.getStatusAsync();
-        console.log(`Recording status: ${JSON.stringify(status)}`);
-        const newDuration = status.durationMillis;
-        const newAudioChunk = await getNewAudioChunk(newDuration);
-    
-        if (newAudioChunk) {
-          console.log(`Sending audio chunk. Length: ${newAudioChunk.length}`);
-          if (socket) {
-            socket.emit('audio-stream', newAudioChunk);
-            console.log('Audio chunk emitted to server');
+      intervalRef.current = setInterval(async () => {
+        if (recordingRef.current && isRecording) {
+          const status = await recordingRef.current.getStatusAsync();
+          console.log(`Recording status: ${JSON.stringify(status)}`);
+          const newDuration = status.durationMillis;
+          const newAudioChunk = await getNewAudioChunk(newDuration);
+      
+          if (newAudioChunk) {
+            console.log(`Sending audio chunk. Length: ${newAudioChunk.length}`);
+            if (socket) {
+              socket.emit('audio-stream', newAudioChunk);
+              console.log('Audio chunk emitted to server');
+            } else {
+              console.log('Socket is not available');
+            }
           } else {
-            console.log('Socket is not available');
+            console.log("No new audio chunk to send");
           }
         } else {
-          console.log("No new audio chunk to send");
+          console.log('Recording ref or isRecording is false, but keeping interval active');
         }
-      } else {
-        console.log('Recording ref or isRecording is false, clearing interval');
-        clearInterval(interval);
-      }
-    }, 100);
+      }, 1000); // Changed to 1000ms for less frequent updates
+    } catch (error) {
+      console.error('Error starting recording:', error);
+    }
   };
 
   const stopRecording = async () => {
@@ -136,11 +120,17 @@ const ChatScreen = () => {
 
     lastDurationRef.current = 0;
 
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
     // Signal the server that the stream has ended
     if (socket) {
       socket.emit('audio-stream-end');
     }
   };
+
 
   return (
     <View style={styles.container}>
