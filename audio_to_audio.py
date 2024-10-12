@@ -9,6 +9,8 @@ import os
 import wave
 import numpy as np
 import io
+import asyncio
+import websockets
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,6 +22,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # Variables to store response and audio data
 response_text = ""
 audio_chunks = []
+input_buffer = []
 
 def generate_event_id():
     timestamp = int(time.time() * 1000)  # Current time in milliseconds
@@ -28,16 +31,13 @@ def generate_event_id():
 
 def check_audio_end(base64_audio_chunk, threshold):
     audio_data = base64.b64decode(base64_audio_chunk)
-    wave_file = wave.open(io.BytesIO(audio_data), 'rb')
-    frames = wave_file.readframes(wave_file.getnframes())
-    wave_file.close()
-
-    # Convert audio frames to numpy array
-    audio_samples = np.frombuffer(frames, dtype=np.int16)
+    
+    # Convert audio data to numpy array
+    audio_samples = np.frombuffer(audio_data, dtype=np.byte)
 
     # Calculate the average volume
     average_volume = np.mean(np.abs(audio_samples))
-
+    print(average_volume)
     return average_volume < threshold
 
 def on_message(ws, message):
@@ -65,6 +65,7 @@ def on_message(ws, message):
     elif event["type"] == "response.done":
         # Handle response done
         print(f"Response complete: {response_text}")
+        ws.close()
 
 def on_error(ws, error):
     print(f"Error: {error}")
@@ -94,12 +95,13 @@ def on_open(ws):
     ws.send(json.dumps(session_update_event))
     
     # Step 2: Send input_audio_buffer.append event to append audio data
-    input_audio_buffer_append_event = {
-        "event_id": generate_event_id(),
-        "type": "input_audio_buffer.append",
-        "audio": base64_audio
-    }
-    ws.send(json.dumps(input_audio_buffer_append_event))
+    for base64_audio in input_buffer:
+        input_audio_buffer_append_event = {
+            "event_id": generate_event_id(),
+            "type": "input_audio_buffer.append",
+            "audio": base64_audio
+        }
+        ws.send(json.dumps(input_audio_buffer_append_event))
     
     # Step 3: Send input_audio_buffer.commit event to commit the audio data
     input_audio_buffer_commit_event = {
@@ -134,29 +136,52 @@ def save_audio_to_file(audio_chunks):
         wave_writer.writeframes(b''.join(audio_chunks))
         wave_writer.close()
 
-def generate_response_from_audio(audio_file_path):
-    global base64_audio
-    # Read the audio file and encode it to base64
-    with open(audio_file_path, "rb") as audio_file:
-        audio_data = audio_file.read()
-    base64_audio = base64.b64encode(audio_data).decode('utf-8')
-    
-    # Create WebSocket connection
-    ws = websocket.WebSocketApp(
-        WEBSOCKET_URL,
-        header={"Authorization": f"Bearer {OPENAI_API_KEY}",
-                "OpenAI-Beta": "realtime=v1"},
-        on_message=on_message,
-        on_error=on_error,
-        on_close=on_close
-    )
-    
-    # Set on_open handler
-    ws.on_open = on_open
-    
-    # Run the WebSocket application
-    ws.run_forever()
+async def handle_client(web_socket, path):
+    global input_buffer, audio_chunks
+    async for message in web_socket:
+        base64_audio = message
+        print(base64_audio[:10])
+        input_buffer.append(base64_audio)
+
+        if check_audio_end(base64_audio, threshold=15):  # Adjust threshold as needed
+            # Create WebSocket connection to OpenAI
+            if len(input_buffer) > 1:
+                ws = websocket.WebSocketApp(
+                    WEBSOCKET_URL,
+                    header={"Authorization": f"Bearer {OPENAI_API_KEY}",
+                            "OpenAI-Beta": "realtime=v1"},
+                    on_message=on_message,
+                    on_error=on_error,
+                    on_close=on_close
+                )
+                
+                # Set on_open handler
+                ws.on_open = on_open
+                
+                # Run the WebSocket application in a separate thread
+                def run_ws():
+                    ws.run_forever()
+                
+                thread = threading.Thread(target=run_ws)
+                thread.start()
+                
+                # Wait for the OpenAI WebSocket to finish
+                thread.join()
+                
+                # Send the audio chunks back to the frontend
+                for chunk in audio_chunks:
+                    await web_socket.send(base64.b64encode(chunk).decode('utf-8'))
+                
+            # Clear the input buffer for the next session
+            input_buffer = []
+            audio_chunks = []
+        print(len(input_buffer))
+
+def start_websocket_server():
+    start_server = websockets.serve(handle_client, "localhost", 8765)
+    asyncio.get_event_loop().run_until_complete(start_server)
+    asyncio.get_event_loop().run_forever()
 
 if __name__ == "__main__":
-    # Example usage
-    generate_response_from_audio("dog-barking-70772.mp3")
+    # Start the WebSocket server
+    start_websocket_server()
