@@ -12,16 +12,28 @@ import time
 from sentiment import get_sentiment
 from summary import get_summary
 from mongo_functions import get_timeline, get_summaries, add_conversation, add_notes, add_connection
+from pydantic import BaseModel
+import base64
+import openai
+import whisper
+# from google.cloud import speech
+
+class EmergencyResponse(BaseModel):
+    message: str
+    name: str
+    phone: int
+    
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client["main_db"]
+whisper_model = whisper.load_model("tiny")
 
 user_info = db["user_info"]
 user_data = db["user_data"]
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins="*", allow_headers=[  "Content-Type", "Authorization", "Access-Control-Allow-Credentials"],)
 
 @app.route('/api/create_user', methods=['POST'])
 def create_user():
@@ -95,5 +107,86 @@ def get_timeline_api(user_id):
     
     return jsonify(timeline), 200
 
+
+# Load phone numbers from JSON
+with open('scraped_data.json', 'r') as f:
+    phone_numbers = json.load(f)
+
+@app.route('/process_audio', methods=['POST'])
+def process_audio():
+    print("Endpoint process audio started")
+    # Get the encrypted audio data from the request
+    encrypted_audio = request.json.get('audio')
+    
+    # Decrypt the audio (assuming it's base64 encoded)
+    audio_data = base64.b64decode(encrypted_audio)
+    # Assuming the audio data is in a file, save the audio data to a temporary file
+    with open("temp_audio.wav", "wb") as f:
+        f.write(audio_data)
+
+    # Transcribe the audio using Whisper
+    result = whisper_model.transcribe("temp_audio.wav")
+
+    # Extract the transcribed text
+    transcription = result["text"]
+    print("Transcription: ", transcription)
+    # Send the transcription to OpenAI for processing
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+
+    # sample_text = "I'm feeling really down and and I just cut myself out of hate. I need help."
+    system_prompt = f"You are an AI assistant. Process the following text and return a brief consoling message and a relevant phone number with the name of the hotline from this list: {json.dumps(phone_numbers)}"
+    
+    openAIclient = openai.OpenAI()
+    completion = openAIclient.beta.chat.completions.parse(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": transcription}
+        ],
+        response_format = EmergencyResponse
+    )
+    
+    # Extract the response from OpenAI
+    ai_response = completion.choices[0].message.parsed
+    print("Message :", ai_response.message)
+    print("Phone number: ", ai_response.phone)
+    print("Name: ", ai_response.name)
+    
+    return jsonify(ai_response), 200
+
+@app.route('/process_text', methods=['POST'])
+def process_text():
+    print("Endpoint process text started")
+    # Get the encrypted audio data from the request
+    input_text= request.json.get('text')
+
+    # Extract the transcribed text
+    print("Transcription: ", input_text)
+    # Send the transcription to OpenAI for processing
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+
+    # sample_text = "I'm feeling really down and and I just cut myself out of hate. I need help."
+    system_prompt = f"You are an AI assistant. Process the following text and return a brief consoling message and a relevant phone number with the name of the hotline from this list: {json.dumps(phone_numbers)}"
+    
+    openAIclient = openai.OpenAI()
+    completion = openAIclient.beta.chat.completions.parse(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": input_text}
+        ],
+        response_format = EmergencyResponse
+    )
+    
+    # Extract the response from OpenAI
+    ai_response = completion.choices[0].message.parsed
+    print("Message :", ai_response.message)
+    print("Phone number: ", ai_response.phone)
+    print("Name: ", ai_response.name)
+    
+    return jsonify(ai_response), 200
+
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)
+
+
+    app.run(debug=True, port=8000, host="0.0.0.0")

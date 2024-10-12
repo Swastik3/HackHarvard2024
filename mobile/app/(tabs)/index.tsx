@@ -5,6 +5,8 @@ import * as Speech from 'expo-speech';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Communications from 'react-native-communications';
+import * as FileSystem from 'expo-file-system';
+import serverIp from '../../ip.js'
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -19,12 +21,12 @@ export default function HomeScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
 
   useEffect(() => {
-    // Check if text-to-speech is available
     async function checkSpeech() {
       const voices = await Speech.getAvailableVoicesAsync();
-      console.log('Available voices:', voices);
+      // console.log('Available voices:', voices);
       if (!voices || voices.length === 0) {
         Alert.alert('Speech Unavailable', 'Text-to-speech is not available on this device.');
       }
@@ -32,42 +34,77 @@ export default function HomeScreen() {
     checkSpeech();
   }, []);
 
-  const toggleRecording = async () => {
-    if (isRecording) {
-      setIsRecording(false);
-      // Stop recording logic here
-      // For now, we'll just add a dummy bot response
-      const response = "I heard you! This is a dummy response.";
-      addMessage(response, false);
-      await speakResponse(response);
-    } else {
+  const startRecording = async () => {
+    try {
+      await Audio.requestPermissionsAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      setRecording(recording);
       setIsRecording(true);
-      try {
-        await Audio.requestPermissionsAsync();
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
-        // Start recording logic here
-      } catch (err) {
-        console.error('Failed to start recording', err);
-      }
+    } catch (err) {
+      console.error('Failed to start recording', err);
     }
   };
 
-  const handleCall = (message: string) => {
-    if (message.toLowerCase().includes('call')) {
-      const phoneNumber = '2405013234';
-      Communications.phonecall(phoneNumber, true)
+  const stopRecording = async () => {
+    if (!recording) return;
 
+    setIsRecording(false);
+    await recording.stopAndUnloadAsync();
+    const uri = recording.getURI();
+    setRecording(null);
+
+    if (uri) {
+      await processAudioAndSend(uri);
+    }
+  };
+
+  const processAudioAndSend = async (uri: string) => {
+    try {
+      const base64Audio = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+      const response = await fetch(`${serverIp}/process_audio`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ audio: base64Audio }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Server response was not ok');
+      }
+
+      const data = await response.json();
+      addMessage(data.text, false);
+      await speakResponse(data.text);
+      handleCall(data.number);
+    } catch (error) {
+      console.error('Error processing audio:', error);
+      Alert.alert('Error', 'Failed to process audio. Please try again.');
+    }
+  };
+
+  const toggleRecording = async () => {
+    if (isRecording) {
+      await stopRecording();
+    } else {
+      await startRecording();
+    }
+  };
+
+  const handleCall = (phoneNumber: string) => {
+    if (phoneNumber && phoneNumber !== '0') {
+      Communications.phonecall(phoneNumber, true);
     }
   };
 
   const addMessage = (text: string, isUser: boolean) => {
     setMessages(prevMessages => [...prevMessages, { text, isUser }]);
-    if (isUser) {
-      handleCall(text);
-    }
   };
 
   const speakResponse = async (text: string) => {
@@ -89,17 +126,33 @@ export default function HomeScreen() {
     }
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (inputText.trim()) {
       addMessage(inputText, true);
       setInputText('');
-      // Here you would typically send the message to your chatbot backend
-      // For now, we'll just add a dummy response
-      setTimeout(async () => {
-        const response = "This is a dummy response to your typed message.";
-        addMessage(response, false);
-        await speakResponse(response);
-      }, 1000);
+      try {
+        console.log("sending the request")
+        const response = await fetch(`${serverIp}/process_audio`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text: inputText }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Server response was not ok');
+        }
+
+        const data = await response.json();
+        const textResponse = `Response: ${data.text}\nPhone: ${data.number}\nName: ${data.name}`;
+        addMessage(textResponse, false);
+        await speakResponse(data.text);
+        handleCall(data.number);
+      } catch (error) {
+        console.error('Error processing text:', error);
+        Alert.alert('Error', 'Failed to process text. Please try again.');
+      }
     }
   };
 
@@ -124,7 +177,6 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    // Scroll to bottom whenever messages change
     setTimeout(scrollToBottom, 100);
   }, [messages]);
 
@@ -175,6 +227,14 @@ export default function HomeScreen() {
                 <Ionicons name="send" size={24} color="#ffffff" />
               </LinearGradient>
             </TouchableOpacity>
+            {/* <TouchableOpacity onPress={handleCall} style={styles.button}>
+              <LinearGradient
+                colors={['#4CAF50', '#45a049']}
+                style={styles.gradientButton}
+              >
+                <Ionicons name="call" size={24} color="#ffffff" />
+              </LinearGradient>
+            </TouchableOpacity> */}
           </View>
         </View>
       </KeyboardAvoidingView>
