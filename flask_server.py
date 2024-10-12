@@ -37,6 +37,8 @@ response_text = ""
 audio_chunks = []
 input_buffer = []
 
+audio_chunks_2 = []
+
 client = MongoClient("mongodb://localhost:27017/")
 db = client["main_db"]
 
@@ -138,7 +140,7 @@ def on_open(ws):
         "type": "response.create",
         "response": {
             "modalities": ["audio", "text"],
-            "instructions": "Describe what you hear in the audio.",
+            "instructions": "Assist the user",
             "voice": "alloy",
             "output_audio_format": "pcm16",
             "tools": [],
@@ -199,12 +201,45 @@ async def handle_client(web_socket, path):
 
 @socketio.on('audio-stream')
 def handle_audio_stream(data):
+    print("Audio stream received")  # Add this to check if the handler is called
+    print(f"Received audio stream: {type(data)}, {len(data)} bytes")
     # Handle binary audio data here
+    # save it to a file
+    
+    audio_chunks_2.append(data)
+
     print(f'Received audio stream: {len(data)} bytes')
 
 @socketio.on('audio-stream-end')
 def handle_audio_stream_end():
     print("Audio stream ended")
+    if not audio_chunks_2:
+        print("No audio chunks received")
+        return
+
+    # Concatenate all chunks into a single byte stream
+    audio_data = b''.join(audio_chunks_2)
+
+    # Convert the audio data to the desired format (e.g., WAV)
+    # Here, we assume the chunks are already in a format that can be concatenated directly
+    # If not, you may need to decode and re-encode the chunks
+
+    # Save the concatenated audio data to a file
+    filename = 'audio.wav'
+    with wave.open(filename, 'wb') as wf:
+        wf.setnchannels(1)  # Mono
+        wf.setsampwidth(2)  # 16-bit
+        wf.setframerate(44100)  # 44.1 kHz
+        wf.writeframes(audio_data)
+
+    print(f'Audio saved to {filename}')
+
+    # Clear the list for the next recording
+    audio_chunks_2.clear()
+
+@socketio.on('connect')
+def test_connect():
+    print("Client connected")
 
 @app.route('/api/create_user', methods=['POST'])
 def create_user():
@@ -279,3 +314,4 @@ def get_timeline_api(user_id):
 
 if __name__ == '__main__':
     socketio.run(app, port=8765, debug=True, host="0.0.0.0")
+

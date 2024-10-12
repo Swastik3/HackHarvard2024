@@ -6,8 +6,8 @@ import io from 'socket.io-client';
 
 const ChatScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [socket, setSocket] = useState<SocketIOClient.Socket | null>(null);
+  const [socket, setSocket] = useState(null);
+  const [recording, setRecording] = useState(null);
 
   useEffect(() => {
     // Initialize the WebSocket connection
@@ -16,10 +16,15 @@ const ChatScreen = () => {
     });
     setSocket(newSocket);
 
+    newSocket.on('connect', () => {
+      console.log('WebSocket connected');
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+    });
+
     return () => {
-      if (recording) {
-        recording.stopAndUnloadAsync();
-      }
       if (newSocket) {
         newSocket.disconnect();
       }
@@ -28,66 +33,50 @@ const ChatScreen = () => {
 
   const startRecording = async () => {
     try {
+      console.log('Requesting permissions..');
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
 
+      console.log('Starting recording..');
       const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
+        Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
       );
-
       setRecording(recording);
       setIsRecording(true);
 
-      // Start streaming audio to the server
-      streamAudioToServer(recording);
+      // Periodically send audio chunks to the server
+      const interval = setInterval(async () => {
+        const status = await recording.getStatusAsync();
+        if (status.isRecording) {
+          const uri = recording.getURI();
+          const audioData = await fetch(uri).then((res) => res.blob());
+          if (socket) {
+            console.log('Streaming audio chunk...');
+            socket.emit('audio-stream', audioData);
+          }
+        } else {
+          clearInterval(interval);
+        }
+      }, 1000); // Send audio chunks every second
     } catch (err) {
       console.error('Failed to start recording', err);
     }
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
+    if (!isRecording) return;
 
+    console.log('Stopping recording...');
     setIsRecording(false);
     await recording.stopAndUnloadAsync();
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-    });
+    setRecording(null);
 
     // Signal the server that the stream has ended
     if (socket) {
       socket.emit('audio-stream-end');
-    }
-  };
-
-  const streamAudioToServer = async (recording: Audio.Recording) => {
-    if (!socket) return;
-
-    while (isRecording) {
-      const status = await recording.getStatusAsync();
-      if (status.isDoneRecording) break;
-
-      const uri = recording.getURI();
-      if (uri) {
-        try {
-          // Read the audio file as a binary buffer
-          const response = await fetch(uri);
-          const blob = await response.blob();
-          const arrayBuffer = await blob.arrayBuffer();
-          const uint8Array = new Uint8Array(arrayBuffer);
-
-          // Send the audio data to the server
-          socket.emit('audio-stream', uint8Array);
-        } catch (error) {
-          console.error('Error streaming audio:', error);
-        }
-      }
-
-      // Add a small delay to avoid overwhelming the server
-      await new Promise(resolve => setTimeout(resolve, 100));
     }
   };
 
@@ -121,8 +110,8 @@ const styles = StyleSheet.create({
   },
   micButtonContainer: {
     position: 'absolute',
-    bottom: 20, // Adjust this value based on the height of your bottom navigation bar
-    alignSelf: 'center', // Center the button horizontally
+    bottom: 20,
+    alignSelf: 'center',
   },
   micButton: {
     borderRadius: 30,
