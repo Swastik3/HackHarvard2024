@@ -11,7 +11,6 @@ import numpy as np
 import io
 import asyncio
 import websockets
-import pyaudio
 
 # Load environment variables from .env file
 load_dotenv()
@@ -61,7 +60,7 @@ def on_message(ws, message):
         # Handle audio done
         print("Audio response complete")
         # Optionally save or play the audio chunks
-        play_audio(audio_chunks)
+        save_audio_to_file(audio_chunks)
     
     elif event["type"] == "response.done":
         # Handle response done
@@ -137,23 +136,10 @@ def save_audio_to_file(audio_chunks):
         wave_writer.writeframes(b''.join(audio_chunks))
         wave_writer.close()
 
-def play_audio(audio_chunks):
-    p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16,
-                    channels=1,
-                    rate=24000,
-                    output=True)
-    
-    for chunk in audio_chunks:
-        stream.write(chunk)
-    
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-
 async def handle_client(web_socket, path):
     global input_buffer, audio_chunks
-    async for base64_audio  in web_socket:
+    async for message in web_socket:
+        base64_audio = message
         print(base64_audio[:10])
         input_buffer.append(base64_audio)
 
@@ -196,43 +182,6 @@ def start_websocket_server():
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
 
-def record_and_stream_audio():
-    CHUNK = 1024
-    FORMAT = pyaudio.paInt16
-    CHANNELS = 1
-    RATE = 24000
-
-    p = pyaudio.PyAudio()
-
-    stream = p.open(format=FORMAT,
-                    channels=CHANNELS,
-                    rate=RATE,
-                    input=True,
-                    frames_per_buffer=CHUNK)
-
-    print("Recording... Press Ctrl+C to stop.")
-
-    async def send_audio_chunks():
-        async with websockets.connect("ws://localhost:8765") as websocket:
-            while True:
-                data = stream.read(CHUNK)
-                base64_audio = base64.b64encode(data).decode('utf-8')
-                await websocket.send(base64_audio)
-                response = await websocket.recv()
-                print(f"Received response: {response}")
-
-    try:
-        asyncio.get_event_loop().run_until_complete(send_audio_chunks())
-    except KeyboardInterrupt:
-        print("Recording stopped.")
-    finally:
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
-
 if __name__ == "__main__":
     # Start the WebSocket server
     start_websocket_server()
-
-    # Record and stream audio
-    record_and_stream_audio()
