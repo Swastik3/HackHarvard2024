@@ -160,31 +160,31 @@ def process_text():
     # Get the encrypted audio data from the request
     input_text= request.json.get('text')
 
-    # Extract the transcribed text
+    # # Extract the transcribed text
     print("Transcription: ", input_text)
-    # Send the transcription to OpenAI for processing
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    # # Send the transcription to OpenAI for processing
+    # openai.api_key = os.getenv("OPENAI_API_KEY")
 
-    # sample_text = "I'm feeling really down and and I just cut myself out of hate. I need help."
-    system_prompt = f"You are an AI assistant. Process the following text and return a brief consoling message and a relevant phone number with the name of the hotline from this list: {json.dumps(phone_numbers)}"
+    # # sample_text = "I'm feeling really down and and I just cut myself out of hate. I need help."
+    # system_prompt = f"You are an AI assistant. Process the following text and return a brief consoling message and a relevant phone number with the name of the hotline from this list: {json.dumps(phone_numbers)}"
     
-    openAIclient = openai.OpenAI()
-    completion = openAIclient.beta.chat.completions.parse(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": input_text}
-        ],
-        response_format = EmergencyResponse
-    )
+    # openAIclient = openai.OpenAI()
+    # completion = openAIclient.beta.chat.completions.parse(
+    #     model="gpt-4o-mini",
+    #     messages=[
+    #         {"role": "system", "content": system_prompt},
+    #         {"role": "user", "content": input_text}
+    #     ],
+    #     response_format = EmergencyResponse
+    # )
     
-    # Extract the response from OpenAI
-    ai_response = completion.choices[0].message.parsed
-    print("Message :", ai_response.message)
-    print("Phone number: ", ai_response.phone)
-    print("Name: ", ai_response.name)
-    
-    return jsonify(ai_response), 200
+    # # Extract the response from OpenAI
+    # ai_response = completion.choices[0].message.parsed
+    # print("Message :", ai_response.message)
+    # print("Phone number: ", ai_response.phone)
+    # print("Name: ", ai_response.name)
+    print("done")
+    return jsonify("ai_response"), 200
 
 if __name__ == '__main__':
 

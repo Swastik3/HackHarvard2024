@@ -9,7 +9,6 @@ import * as FileSystem from 'expo-file-system';
 import serverIp from '../../ip.js'
 
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 
 interface Message {
   text: string;
@@ -132,7 +131,7 @@ export default function HomeScreen() {
       setInputText('');
       try {
         console.log("sending the request")
-        const response = await fetch(`${serverIp}/process_audio`, {
+        const response = await fetch(`${serverIp}/process_text`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
