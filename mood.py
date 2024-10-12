@@ -1,4 +1,4 @@
-from gemini_beater import flash_inferencer
+from gemini_beater import flash_inference
 
 def get_mood(data, sentiment) -> str:
     prompt = """
@@ -8,5 +8,5 @@ def get_mood(data, sentiment) -> str:
     sentiment: {sentiment}
     """
 
-    response = flash_inferencer(prompt.format(data=data, sentiment=sentiment))
+    response = flash_inference(prompt.format(data=data, sentiment=sentiment))
     return response
