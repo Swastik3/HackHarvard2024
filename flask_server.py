@@ -24,6 +24,7 @@ import websockets
 from flask_socketio import SocketIO, emit
 import eventlet
 import wave
+from pydub import AudioSegment
 
 # Load environment variables from .env file
 load_dotenv()
@@ -199,47 +200,70 @@ async def handle_client(web_socket, path):
             input_buffer = []
             audio_chunks = []
 
+audio_streams = {}
+
+@socketio.on('connect')
+def handle_connect():
+    print(f"Client connected: {request.sid}")
+    audio_streams[request.sid] = []
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print(f"Client disconnected: {request.sid}")
+    if request.sid in audio_streams:
+        del audio_streams[request.sid]
+
 @socketio.on('audio-stream')
 def handle_audio_stream(data):
-    print("Audio stream received")  # Add this to check if the handler is called
-    print(f"Received audio stream: {type(data)}, {len(data)} bytes")
-    # Handle binary audio data here
-    # save it to a file
+    print(f"Received audio chunk from {request.sid}")
+    print(f"Chunk data type: {type(data)}, length: {len(data)}")
+    if request.sid not in audio_streams:
+        audio_streams[request.sid] = []
     
-    audio_chunks_2.append(data)
-
-    print(f'Received audio stream: {len(data)} bytes')
+    try:
+        # Decode the base64 string to bytes
+        audio_chunk = base64.b64decode(data)
+        print(f"Decoded chunk length: {len(audio_chunk)} bytes")
+        audio_streams[request.sid].append(audio_chunk)
+        print(f"Total chunks for {request.sid}: {len(audio_streams[request.sid])}")
+    except Exception as e:
+        print(f"Error processing audio chunk: {e}")
 
 @socketio.on('audio-stream-end')
 def handle_audio_stream_end():
-    print("Audio stream ended")
-    if not audio_chunks_2:
+    print(f"Audio stream ended for {request.sid}")
+    if request.sid not in audio_streams:
         print("No audio chunks received")
         return
 
-    # Concatenate all chunks into a single byte stream
-    audio_data = b''.join(audio_chunks_2)
+    try:
+        # Concatenate all chunks into a single byte stream
+        audio_data = b''.join(audio_streams[request.sid])
+        print(f"Total audio data length: {len(audio_data)} bytes")
 
-    # Convert the audio data to the desired format (e.g., WAV)
-    # Here, we assume the chunks are already in a format that can be concatenated directly
-    # If not, you may need to decode and re-encode the chunks
+        if len(audio_data) == 0:
+            print("Error: No audio data to write")
+            return
 
-    # Save the concatenated audio data to a file
-    filename = 'audio.wav'
-    with wave.open(filename, 'wb') as wf:
-        wf.setnchannels(1)  # Mono
-        wf.setsampwidth(2)  # 16-bit
-        wf.setframerate(44100)  # 44.1 kHz
-        wf.writeframes(audio_data)
+        # Save the concatenated audio data to a file
+        filename = f'audio_{request.sid}.wav'
+        with wave.open(filename, 'wb') as wf:
+            wf.setnchannels(1)  # Mono
+            wf.setsampwidth(2)  # 16-bit
+            wf.setframerate(44100)  # 44.1 kHz
+            wf.writeframes(audio_data)
 
-    print(f'Audio saved to {filename}')
+        print(f'Audio saved to {filename}')
 
-    # Clear the list for the next recording
-    audio_chunks_2.clear()
+        # Process the audio file here (e.g., send it to a speech-to-text service)
+        # For now, we'll just emit a message back to the client
+        emit('audio-processed', {'message': 'Audio processing complete', 'filename': filename})
 
-@socketio.on('connect')
-def test_connect():
-    print("Client connected")
+    except Exception as e:
+        print(f"Error saving audio: {e}")
+    finally:
+        # Clear the audio chunks for this client
+        audio_streams[request.sid] = []
 
 @app.route('/api/create_user', methods=['POST'])
 def create_user():
