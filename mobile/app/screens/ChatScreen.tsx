@@ -11,7 +11,9 @@ const ChatScreen = () => {
 
   useEffect(() => {
     // Initialize the WebSocket connection
-    const newSocket = io('YOUR_SERVER_URL');
+    const newSocket = io('http://localhost:8765', {
+      transports: ['websocket'],
+    });
     setSocket(newSocket);
 
     return () => {

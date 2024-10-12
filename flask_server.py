@@ -21,6 +21,9 @@ import numpy as np
 import io
 import asyncio
 import websockets
+from flask_socketio import SocketIO, emit
+import eventlet
+import wave
 
 # Load environment variables from .env file
 load_dotenv()
@@ -42,6 +45,7 @@ user_data = db["user_data"]
 
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 def generate_event_id():
     timestamp = int(time.time() * 1000)  # Current time in milliseconds
@@ -193,10 +197,14 @@ async def handle_client(web_socket, path):
             input_buffer = []
             audio_chunks = []
 
-def start_websocket_server():
-    start_server = websockets.serve(handle_client, "localhost", 8765)
-    asyncio.get_event_loop().run_until_complete(start_server)
-    asyncio.get_event_loop().run_forever()
+@socketio.on('audio-stream')
+def handle_audio_stream(data):
+    # Handle binary audio data here
+    print(f'Received audio stream: {len(data)} bytes')
+
+@socketio.on('audio-stream-end')
+def handle_audio_stream_end():
+    print("Audio stream ended")
 
 @app.route('/api/create_user', methods=['POST'])
 def create_user():
@@ -270,9 +278,4 @@ def get_timeline_api(user_id):
     return jsonify(timeline), 200
 
 if __name__ == '__main__':
-    # Start the WebSocket server in a separate thread
-    websocket_thread = threading.Thread(target=start_websocket_server)
-    websocket_thread.start()
-    
-    # Start the Flask application
-    app.run(debug=True, port=8000)
+    socketio.run(app, port=8765, debug=True, host="0.0.0.0")
