@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Sidebar from './components/SideBar';
 import ChatBot from './components/ChatBot';
 import PersonalGoals from './components/PersonalGoals';
-import Community from './components/Community';
 import './index.css';
+import Community from './components/Community';
 
 function App() {
   return (
@@ -13,9 +13,9 @@ function App() {
         <Sidebar />
         <div className="flex-grow ml-72 p-8 max-h-screen overflow-y-auto">
           <Routes>
-            <Route path="/" element={<ChatBot />} />
+            <Route path="/contact" element={<ChatBot />} />
             <Route path="/goals" element={<PersonalGoals />} />
-            <Route path="/community" element={<Community />} />
+            <Route path="/Community" element={<Community />} />
           </Routes>
         </div>
       </div>

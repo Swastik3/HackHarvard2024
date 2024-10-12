@@ -46,7 +46,6 @@ class Output(BaseModel):
 
 
 def answer(query):  
-    print(messages)
     context=vectorstore.similarity_search(query, k=3)
     formatted_user_query = f"""
         This is the Query:\n
@@ -66,13 +65,12 @@ def answer(query):
         response_format=Output
     )
     response = response.choices[0].message.parsed
-    sm=messages
     messages.append({'role': 'assistant', 'content': str(response)})
+    return response
 
-    print(response)
-    return sm, response
 
-while True:
-    user_input = input("You: ")
-    response = answer(user_input)
-    print("Bot:", response)
+if __name__=="__main__":
+    while True:
+        user_input = input("You: ")
+        response = answer(user_input)
+        print("Bot:", response)
