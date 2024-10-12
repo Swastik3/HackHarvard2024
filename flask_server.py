@@ -33,7 +33,7 @@ user_data = db["user_data"]
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app, origins="*", allow_headers=[  "Content-Type", "Authorization", "Access-Control-Allow-Credentials"],)
+CORS(app, origins=["'http://localhost:8081"], allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials", "Access-Control-Allow-Origin"])
 
 @app.route('/api/create_user', methods=['POST'])
 def create_user():
