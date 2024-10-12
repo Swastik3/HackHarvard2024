@@ -11,6 +11,7 @@ import numpy as np
 import io
 import asyncio
 import websockets
+import pyaudio  # Import pyaudio for real-time audio playback
 
 # Load environment variables from .env file
 load_dotenv()
@@ -40,9 +41,15 @@ def check_audio_end(base64_audio_chunk, threshold):
     print(average_volume)
     return average_volume < threshold
 
-def on_message(ws, message):
+# Initialize pyaudio stream
+p = pyaudio.PyAudio()
+stream = p.open(format=pyaudio.paInt16,
+                channels=1,
+                rate=24000,
+                output=True)
+
+async def on_message(ws, message, web_socket):
     global response_text, audio_chunks
-    print(f"Received message: {message}", end="\n\n")
     event = json.loads(message)
     
     if event["type"] == "response.output_item.added":
@@ -55,12 +62,13 @@ def on_message(ws, message):
         # Handle audio delta
         audio_chunk = base64.b64decode(event["delta"])
         audio_chunks.append(audio_chunk)
+        
+        # Play the audio chunk as it arrives
+        stream.write(audio_chunk)
     
     elif event["type"] == "response.audio.done":
         # Handle audio done
         print("Audio response complete")
-        # Optionally save or play the audio chunks
-        save_audio_to_file(audio_chunks)
     
     elif event["type"] == "response.done":
         # Handle response done
@@ -127,15 +135,6 @@ def on_open(ws):
     }
     ws.send(json.dumps(response_create_event))
 
-def save_audio_to_file(audio_chunks):
-    with open("output_audio.wav", "wb") as wavefile:
-        wave_writer = wave.open(wavefile, 'wb')
-        wave_writer.setnchannels(1)  # Mono channel
-        wave_writer.setsampwidth(2)  # Little endian (2 bytes per sample)
-        wave_writer.setframerate(24000)  # 24k sample rate
-        wave_writer.writeframes(b''.join(audio_chunks))
-        wave_writer.close()
-
 async def handle_client(web_socket, path):
     global input_buffer, audio_chunks
     async for message in web_socket:
@@ -143,14 +142,14 @@ async def handle_client(web_socket, path):
         print(base64_audio[:10])
         input_buffer.append(base64_audio)
 
-        if check_audio_end(base64_audio, threshold=33):  # Adjust threshold as needed
+        if check_audio_end(base64_audio, threshold=35):  # Adjust threshold as needed
             # Create WebSocket connection to OpenAI
-            if len(input_buffer) > 1:
+            if len(input_buffer) > 2:
                 ws = websocket.WebSocketApp(
                     WEBSOCKET_URL,
                     header={"Authorization": f"Bearer {OPENAI_API_KEY}",
                             "OpenAI-Beta": "realtime=v1"},
-                    on_message=on_message,
+                    on_message=lambda ws, msg: asyncio.run(on_message(ws, msg, web_socket)),  # Pass web_socket
                     on_error=on_error,
                     on_close=on_close
                 )
@@ -167,10 +166,6 @@ async def handle_client(web_socket, path):
                 
                 # Wait for the OpenAI WebSocket to finish
                 thread.join()
-                
-                # Send the audio chunks back to the frontend
-                for chunk in audio_chunks:
-                    await web_socket.send(base64.b64encode(chunk).decode('utf-8'))
                 
             # Clear the input buffer for the next session
             input_buffer = []
