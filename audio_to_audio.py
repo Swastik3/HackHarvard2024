@@ -116,7 +116,7 @@ def on_open(ws):
         "type": "response.create",
         "response": {
             "modalities": ["audio", "text"],
-            "instructions": "Describe what you hear in the audio.",
+            "instructions": "You are a helpful AI assistant. Follow the instructions to assist the user.",
             "voice": "alloy",
             "output_audio_format": "pcm16",
             "tools": [],
@@ -143,7 +143,7 @@ async def handle_client(web_socket, path):
         print(base64_audio[:10])
         input_buffer.append(base64_audio)
 
-        if check_audio_end(base64_audio, threshold=15):  # Adjust threshold as needed
+        if check_audio_end(base64_audio, threshold=33):  # Adjust threshold as needed
             # Create WebSocket connection to OpenAI
             if len(input_buffer) > 1:
                 ws = websocket.WebSocketApp(
