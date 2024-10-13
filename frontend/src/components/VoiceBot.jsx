@@ -63,8 +63,12 @@ const VoiceBot = () => {
 
   const callUpdateEndpoint = async () => {
     try {
-      const response = await fetch('http://localhost:8000/update', {
+      const response = await fetch('http://localhost:8000/api/conversation', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: 1 }),
       });
       if (!response.ok) {
         throw new Error('Failed to update');

@@ -93,10 +93,13 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
     }
   };
 
-  // Handle Toggling Goal Completion
   const handleToggleGoal = async (goalId) => {
     try {
       const updatedGoal = goals.find((goal) => goal._id === goalId);
+      if (!updatedGoal) {
+        console.error(`Goal with ID ${goalId} not found.`);
+        return;
+      }
       const updatedData = { completed: !updatedGoal.completed, last_updated: new Date().toISOString() };
       await updateGoal(goalId, updatedData);
       setGoals((prevGoals) =>

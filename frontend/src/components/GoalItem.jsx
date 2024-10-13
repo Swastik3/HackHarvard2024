@@ -16,7 +16,7 @@ function GoalItem({ goal, onToggle }) {
       <input
         type="checkbox"
         checked={goal.completed}
-        onChange={() => onToggle(goal.id)}
+        onChange={() => onToggle(goal._id)} // Corrected here
         className="form-checkbox h-5 w-5 text-primary-light rounded focus:ring-primary-light"
       />
       <span className={`flex-grow ${goal.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>

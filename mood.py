@@ -9,4 +9,5 @@ def get_mood(data, sentiment) -> str:
     """
 
     response = flash_inference(prompt.format(data=data, sentiment=sentiment))
+    response = response.replace('\n','').strip()
     return response

@@ -9,6 +9,6 @@ def get_takeaways(data) -> str:
 """
     response = flash_inference(prompt.format(data=data))
     #cleaning the response and remove everything except the whitespace, commas and words
-    response = ''.join(e for e in response.text if e.isalnum() or e.isspace() or e == ',')
+    response = ''.join(e for e in response if e.isalnum() or e.isspace() or e == ',')
     takeaways = response.split(',')
     return takeaways

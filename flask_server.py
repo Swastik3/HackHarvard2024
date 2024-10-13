@@ -140,9 +140,9 @@ def add_conversation_api():
     data = request.json
     data["user_id"] = int(data["user_id"])
     user_id = data["user_id"]
-    conversation = data["conversation"]
-    conversation_with = data.get("conversation_with")  # Can be None for bot conversations
-    conversation_type = data["conversation_type"]  # 'bot_conversation' or 'connection_conversation'
+    conversation = get_messages()
+    conversation_with = 'bot_conversation'  # Can be None for bot conversations
+    conversation_type = 'bot_conversation'  # 'bot_conversation' or 'connection_conversation'
     
     add_conversation(user_id, conversation, conversation_with, conversation_type)
     return jsonify({"message": "Conversation added successfully"}), 201
@@ -165,8 +165,6 @@ def get_timeline_api(user_id):
     print("TIMELINE KEYS")
     recursive_objectid_destroyer(timeline)
     for item in timeline:
-        print("ITEM KEYS")
-        print(item)
         item['_id'] = str(item['_id'])
 
     return jsonify(timeline), 200
@@ -191,8 +189,6 @@ def add_prescription_api():
 def get_prescription_api(user_id):
     user_id = int(user_id)
     prescriptions = get_prescriptions(user_id)
-    print("PRESCRIPTION KEYS")
-    print(prescriptions)
     for pres in prescriptions:
         pres['_id'] = json.loads(json_util.dumps(pres['_id']))
     return jsonify(prescriptions), 200
@@ -215,11 +211,7 @@ def update_prescription():
 def get_goals_api(user_id):
     user_id = int(user_id)
     goals = get_goals(user_id)
-    print("GOAL KEYS")
-    print(goals)
     recursive_objectid_destroyer(goals)
-    for goal in goals:
-        goal['_id'] = json.loads(json_util.dumps(goal['_id']))
     return jsonify(goals), 200
 
 @app.route('/api/goals/<user_id>', methods=['POST'])
@@ -227,19 +219,16 @@ def add_goal_api(user_id):
     data = request.json
     user_id = int(user_id)
     goal_id = add_goal(user_id, data)
-    print("GOAL ID KEYS")
-    print(goal_id)
     new_goal = user_data.find_one({"_id": goal_id.inserted_id})
-    new_goal['_id'] = json.loads(json_util.dumps(new_goal['_id']))
+    recursive_objectid_destroyer(new_goal)
     return jsonify(new_goal), 201
 
-@app.route('/api/goals/update/<goal_id>', methods=['PATCH'])
+@app.route('/api/goals/<goal_id>', methods=['PATCH'])
 def update_goal_api(goal_id):
     data = request.json
     update_goal(goal_id, data)
     updated_goal = user_data.find_one({"_id": ObjectId(goal_id)})
-    print(updated_goal)
-    updated_goal['_id'] = json.loads(json_util.dumps(updated_goal['_id']))
+    updated_goal = recursive_objectid_destroyer(updated_goal)
     return jsonify(updated_goal), 200
 
 #--------------------------------------------------------------

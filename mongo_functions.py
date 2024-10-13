@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 from bson import ObjectId
 
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb://159.203.159.222:27017/")
 db = client["main_db"]
 
 user_info = db["user_info"]
@@ -29,7 +29,8 @@ def add_conversation(user_id, conversation, conversation_with, conversation_type
     sentiment = get_sentiment(conversation)
     mood = get_mood(conversation, sentiment)
     takeaways = get_takeaways(conversation)
-    
+    conversation = conversation[1:]
+    conversation = [{"sender": i["role"], "message": i["content"]} for i in conversation]
     conversation_data = {
         "user_id": user_id,
         "type": conversation_type,  # 'bot_conversation' or 'connection_conversation'
@@ -39,16 +40,15 @@ def add_conversation(user_id, conversation, conversation_with, conversation_type
         "sentiment": sentiment,
         "mood": mood,
         "takeaways": takeaways,
-        "timestamp": time.time()
+        "timestamp": int(time.time()) * 1000
     }
-    
+    print(conversation_data)
     user_data.insert_one(conversation_data)
 
 def add_notes(user_id, notes):
     summary = get_summary(notes)
     sentiment = get_sentiment(notes)
     mood = get_mood(notes, sentiment)
-    
     notes_data = {
         "user_id": user_id,
         "type": "notes",
@@ -56,8 +56,9 @@ def add_notes(user_id, notes):
         "summary": summary,
         "sentiment": sentiment,
         "mood": mood,
-        "timestamp": time.time()
+        "timestamp": int(time.time()) * 1000
     }
+    print(notes_data)
     
     user_data.insert_one(notes_data)
 
@@ -67,7 +68,7 @@ def add_connection(user_id, connection_name, connection_user_id):
         "type": "connection_added",
         "connection_name": connection_name,
         "connection_user_id": connection_user_id,
-        "timestamp": time.time()
+        "timestamp": int(time.time()) * 1000
     }
     
     user_data.insert_one(connection_data)
