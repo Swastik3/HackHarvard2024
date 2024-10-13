@@ -58,7 +58,7 @@ ms = []
 class EmergencyResponse(BaseModel):
     message: str
     name: str
-    phone: int
+    phone: str
 
 def recursive_objectid_destroyer(doc):
     '''
