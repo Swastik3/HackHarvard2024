@@ -1,17 +1,8 @@
-import websocket
 import json
 import base64
 import time
-import uuid
-import threading
 from dotenv import load_dotenv
 import os
-import numpy as np
-import asyncio
-import websockets
-import pyaudio  # Import pyaudio for real-time audio playback
-import requests
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
@@ -19,8 +10,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 from bson import ObjectId, json_util
 import time
-
-# Import custom modules (ensure these are available in your project)
 from sentiment import get_sentiment
 from summary import get_summary
 from takeaways import get_takeaways
@@ -35,196 +24,33 @@ from mongo_functions import (
     add_goal,
     update_goal,
 )
-
 from flask_socketio import SocketIO
 from datetime import datetime
 import time
-
-load_dotenv()
 from mongo_functions import get_timeline, get_summaries, add_conversation, add_notes, add_connection
 from pydantic import BaseModel
 import base64
 import openai
 import whisper
-# from google.cloud import speech
+load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+openAIclient = openai.OpenAI()
+
+client_mongo = MongoClient("mongodb://159.203.159.222:27017/")
+db = client_mongo["main_db"]
+user_info = db["user_info"]
+user_data = db["user_data"]
+
+whisper_model = whisper.load_model("tiny")
+
+app = Flask(__name__)
+CORS(app)
 
 class EmergencyResponse(BaseModel):
     message: str
     name: str
     phone: int
-    
-
-client = MongoClient("mongodb://localhost:27017/")
-db = client["main_db"]
-
-# ==========================
-# OpenAI WebSocket Client Setup
-# ==========================
-
-# Instruction for OpenAI model
-
-# Replace with your actual WebSocket URL
-WEBSOCKET_URL = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# Variables to store response and audio data
-response_text = ""
-audio_chunks = []
-input_buffer = []
-input_buffer_lock = threading.Lock()  # To ensure thread-safe operations
-
-def generate_event_id():
-    timestamp = int(time.time() * 1000)  # Current time in milliseconds
-    random_string = str(uuid.uuid4())[:8]  # First 8 characters of a UUID
-    return f"{timestamp}_{random_string}"
-
-# Initialize pyaudio stream for audio playback
-p = pyaudio.PyAudio()
-stream = p.open(format=pyaudio.paInt16,
-                channels=1,
-                rate=24000,
-                output=True)
-
-def on_message(ws, message):
-    global response_text, audio_chunks
-    event = json.loads(message)
-    
-    if event["type"] == "response.output_item.added":
-        # Handle text response 
-        for content in event["item"]["content"]:
-            if content["type"] == "text":
-                response_text += content["text"]
-    
-    elif event["type"] == "response.audio.delta":
-        # Handle audio delta
-        audio_chunk = base64.b64decode(event["delta"])
-        audio_chunks.append(audio_chunk)
-        
-        # Play the audio chunk as it arrives
-        stream.write(audio_chunk)
-    
-    elif event["type"] == "response.audio.done":
-        # Handle audio done
-        print("Audio response complete")
-    
-    elif event["type"] == "response.done":
-        # Handle response done
-        print(f"Response complete: {response_text}")
-        
-    elif event["type"] == "input_audio_buffer.speech_started":
-        print("Speech started")
-    
-    elif event["type"] == "input_audio_buffer.speech_stopped":
-        print("Speech ended")
-
-def on_error(ws, error):
-    print(f"Error: {error}")
-
-def on_close(ws, close_status_code, close_msg):
-    print(f"WebSocket closed with status: {close_status_code}, message: {close_msg}")
-
-def on_open(ws):
-    print("WebSocket opened")
-    
-    # Step 1: Send session.update event to configure the session
-    
-    timeline = requests.get(r"http://159.203.159.222:8765/api/timeline/1").json()
-    prescription = requests.get(r"http://159.203.159.222:8765/api/prescription/1").json()
-    prompt = """
-    You are a mental health advisor/psychiatrist. You are provided with a timeline of a patient's mental health journey.
-    In addition to that, you also have access to patient's goal setting, notes, and prescriptions.
-    Your task is to talk with the patient and provide them with the necessary advice and support.
-    Make sure to ask about what they did during the day, how they are feeling, and if they have any concerns.
-    Do not forget to ask about their medications and their progress on the goals they set.
-    
-    Timeline:
-    {timeline}
-    
-    Prescription:
-    {prescription}
-    """.format(timeline=timeline, prescription=prescription)
-    
-    print(f"Prompt: {prompt}")
-    
-    session_update_event = {
-        "event_id": generate_event_id(),
-        "type": "session.update",
-        "session": {
-            "modalities": ["text", "audio"],
-            "instructions": str(prompt),
-            "voice": "alloy",
-            "input_audio_format": "pcm16",
-            "output_audio_format": "pcm16", 
-            "turn_detection": {
-                "type": "server_vad",
-                "threshold": 0.6,
-                "prefix_padding_ms": 300
-            },
-            "tools": [],
-            "tool_choice": "auto",
-            "temperature": 0.8,
-        }
-    }
-    ws.send(json.dumps(session_update_event))
-
-def append_audio_buffer(ws):
-    """
-    This function will keep appending the base64 audio from input_buffer to the OpenAI WebSocket session.
-    """
-    while True:
-        with input_buffer_lock:
-            if input_buffer:
-                base64_audio = input_buffer.pop(0)
-                input_audio_buffer_append_event = {
-                    "event_id": generate_event_id(),
-                    "type": "input_audio_buffer.append",
-                    "audio": base64_audio
-                }
-                ws.send(json.dumps(input_audio_buffer_append_event))
-        time.sleep(0.1)  # Prevent excessive CPU usage, adjust this delay as needed
-
-def start_openai_ws():
-    """
-    Start OpenAI WebSocket and handle real-time interactions.
-    """
-    ws = websocket.WebSocketApp(
-        WEBSOCKET_URL,
-        header={"Authorization": f"Bearer {OPENAI_API_KEY}",
-                "OpenAI-Beta": "realtime=v1"},
-        on_message=on_message,
-        on_error=on_error,
-        on_close=on_close
-    )
-    
-    ws.on_open = on_open
-    ws_thread = threading.Thread(target=ws.run_forever, daemon=True)
-    ws_thread.start()
-    
-    # Append audio buffer in a separate thread
-    audio_append_thread = threading.Thread(target=append_audio_buffer, args=(ws,), daemon=True)
-    audio_append_thread.start()
-
-    return ws
-
-# ==========================
-# Flask App and SocketIO Setup
-# ==========================
-
-app = Flask(__name__)
-CORS(app, origins="*")
-socketio = SocketIO(app, cors_allowed_origins="*")
-
-# MongoDB Setup
-client_mongo = MongoClient("mongodb://159.203.159.222:27017/")
-db = client_mongo["main_db"]
-whisper_model = whisper.load_model("tiny")
-
-user_info = db["user_info"]
-user_data = db["user_data"]
-
-app = Flask(__name__)
-CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
 
 def recursive_objectid_destroyer(doc):
     '''
@@ -409,6 +235,8 @@ def update_goal_api(goal_id):
     updated_goal['_id'] = json.loads(json_util.dumps(updated_goal['_id']))
     return jsonify(updated_goal), 200
 
+#--------------------------------------------------------------
+
 # Load phone numbers from JSON
 with open('scraped_data.json', 'r') as f:
     phone_numbers = json.load(f)
@@ -432,12 +260,11 @@ def process_audio():
     transcription = result["text"]
     print("Transcription: ", transcription)
     # Send the transcription to OpenAI for processing
-    openai.api_key = os.getenv("OPENAI_API_KEY")
 
     # sample_text = "I'm feeling really down and and I just cut myself out of hate. I need help."
-    system_prompt = f"You are an AI assistant. Process the following text and return a brief consoling message and a relevant phone number with the name of the hotline from this list: {json.dumps(phone_numbers)}"
+    system_prompt = f'''You are an AI assistant who returns a brief consoling message to help the user and, only if needed provides a relevant phone number with the name of a hotline. 
+    The only numbers you can use are these: {json.dumps(phone_numbers)}'''
     
-    openAIclient = openai.OpenAI()
     completion = openAIclient.beta.chat.completions.parse(
         model="gpt-4o-mini",
         messages=[
@@ -452,8 +279,14 @@ def process_audio():
     print("Message :", ai_response.message)
     print("Phone number: ", ai_response.phone)
     print("Name: ", ai_response.name)
-    
-    return jsonify(ai_response), 200
+    response = {}
+    if(ai_response.phone != "0" and ai_response.name != ""):
+        response["text"] = ai_response.message
+        response["phone"] = ai_response.phone
+        response["name"] = ai_response.name
+    else:
+        response["text"] = ai_response.message
+    return jsonify(response), 200
 
 @app.route('/process_text', methods=['POST'])
 def process_text():
@@ -466,26 +299,32 @@ def process_text():
     # # Send the transcription to OpenAI for processing
     # openai.api_key = os.getenv("OPENAI_API_KEY")
 
-    # # sample_text = "I'm feeling really down and and I just cut myself out of hate. I need help."
-    # system_prompt = f"You are an AI assistant. Process the following text and return a brief consoling message and a relevant phone number with the name of the hotline from this list: {json.dumps(phone_numbers)}"
+   # sample_text = "I'm feeling really down and and I just cut myself out of hate. I need help."
+    system_prompt = f'''You are an AI assistant who returns a brief consoling message to help the user and, only if needed provides a relevant phone number with the name of a hotline. 
+    The only numbers you can use are these: {json.dumps(phone_numbers)}'''
     
-    # openAIclient = openai.OpenAI()
-    # completion = openAIclient.beta.chat.completions.parse(
-    #     model="gpt-4o-mini",
-    #     messages=[
-    #         {"role": "system", "content": system_prompt},
-    #         {"role": "user", "content": input_text}
-    #     ],
-    #     response_format = EmergencyResponse
-    # )
+    completion = openAIclient.beta.chat.completions.parse(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": input_text}
+        ],
+        response_format = EmergencyResponse
+    )
     
-    # # Extract the response from OpenAI
-    # ai_response = completion.choices[0].message.parsed
-    # print("Message :", ai_response.message)
-    # print("Phone number: ", ai_response.phone)
-    # print("Name: ", ai_response.name)
-    print("done")
-    return jsonify("ai_response"), 200
+    # Extract the response from OpenAI
+    ai_response = completion.choices[0].message.parsed
+    print("Message :", ai_response.message)
+    print("Phone number: ", ai_response.phone)
+    print("Name: ", ai_response.name)
+    response = {}
+    if(ai_response.phone != "0" and ai_response.name != ""):
+        response["text"] = ai_response.message
+        response["phone"] = ai_response.phone
+        response["name"] = ai_response.name
+    else:
+        response["text"] = ai_response.message
+    return jsonify(response), 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000, host="0.0.0.0")
