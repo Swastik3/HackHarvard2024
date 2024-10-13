@@ -1,4 +1,7 @@
 {
+    "Serious and Urgent":[
+    ["Emergency (Fire, police, ambulance)", "911"]
+    ],
     "Abortion": [
     ["National Domestic Violence Hotline", "1-800-799-SAFE"],
     ["Post Abortion Counseling", "1-800-228-0332"],
@@ -138,4 +141,4 @@
     ["Carlisle Helpline", "717-249-6226"],
     ["Crisis Intervention (York)", "1-800-673-2496"]
     ]
-    }
+}
