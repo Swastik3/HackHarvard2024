@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/ThemedText';
 interface Message {
   text: string;
   isUser: boolean;
+  isAudio?: boolean;
 }
 
 export default function HomeScreen() {
@@ -59,6 +60,7 @@ export default function HomeScreen() {
     setRecording(null);
 
     if (uri) {
+      addMessage('Audio message', true, true);
       await processAudioAndSend(uri);
     }
   };
@@ -66,6 +68,10 @@ export default function HomeScreen() {
   const processAudioAndSend = async (uri: string) => {
     try {
       const base64Audio = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+      // const sampleresponse = await fetch(`${serverIp}/test`, {
+      //   method: 'GET'
+      // });
+      // console.log(sampleresponse)
       const response = await fetch(`${serverIp}/process_audio`, {
         method: 'POST',
         headers: {
@@ -79,9 +85,17 @@ export default function HomeScreen() {
       }
 
       const data = await response.json();
-      addMessage(data.text, false);
+      if (data.phone && data.name) {
+        const formattedPhone = data.phone.replace(/^1?(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3');
+        const textResponse = `${data.text}\nPhone: ${formattedPhone}\nName: ${data.name}`;
+        addMessage(textResponse, false);
+      }else{
+        const textResponse = `${data.text}`;
+        addMessage(textResponse, false);
+      }
+      console.log
       await speakResponse(data.text);
-      handleCall(data.number);
+      handleCall(data.phone);
     } catch (error) {
       console.error('Error processing audio:', error);
       Alert.alert('Error', 'Failed to process audio. Please try again.');
@@ -97,13 +111,14 @@ export default function HomeScreen() {
   };
 
   const handleCall = (phoneNumber: string) => {
-    if (phoneNumber && phoneNumber !== '0') {
+    console.log("Recheds here")
+    if (phoneNumber && phoneNumber !== "0") {
       Communications.phonecall(phoneNumber, true);
     }
   };
 
-  const addMessage = (text: string, isUser: boolean) => {
-    setMessages(prevMessages => [...prevMessages, { text, isUser }]);
+  const addMessage = (text: string, isUser: boolean, isAudio: boolean = false) => {
+    setMessages(prevMessages => [...prevMessages, { text, isUser, isAudio }]);
   };
 
   const speakResponse = async (text: string) => {
@@ -131,7 +146,7 @@ export default function HomeScreen() {
       setInputText('');
       try {
         console.log("sending the request")
-        const response = await fetch(`${serverIp}/process_text`, {
+        const response = await fetch(`http://159.203.159.222:8000/process_text`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -144,10 +159,17 @@ export default function HomeScreen() {
         }
 
         const data = await response.json();
-        const textResponse = `Response: ${data.text}\nPhone: ${data.number}\nName: ${data.name}`;
-        addMessage(textResponse, false);
+        if (data.phone && data.name) {
+            const formattedPhone = data.phone.replace(/^1?(\d{3})(\d{3})(\w{4})$/, '($1) $2-$3');
+            const textResponse = `${data.text}\nPhone: ${formattedPhone}\nName: ${data.name}`;
+          addMessage(textResponse, false);
+        }else{
+          const textResponse = `${data.text}`;
+          addMessage(textResponse, false);
+        }
+        console.log
         await speakResponse(data.text);
-        handleCall(data.number);
+        handleCall(data.phone);
       } catch (error) {
         console.error('Error processing text:', error);
         Alert.alert('Error', 'Failed to process text. Please try again.');
@@ -178,7 +200,6 @@ export default function HomeScreen() {
   useEffect(() => {
     setTimeout(scrollToBottom, 100);
   }, [messages]);
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView 
@@ -195,45 +216,40 @@ export default function HomeScreen() {
         >
           {messages.map((message, index) => (
             <View key={index} style={[styles.messageBubble, message.isUser ? styles.userMessage : styles.botMessage]}>
+              {message.isAudio ? (
+                <Ionicons name="mic" size={24} color="#ffffff" style={styles.audioIcon} />
+              ) : null}
               <ThemedText style={message.isUser ? styles.userMessageText : styles.botMessageText}>
                 {message.text}
               </ThemedText>
             </View>
           ))}
         </ScrollView>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Type a message..."
-            placeholderTextColor="#999"
-          />
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={toggleRecording} style={styles.button}>
-              <LinearGradient
-                colors={['#ff0000', '#8b0000']}
-                style={styles.gradientButton}
-              >
-                <Ionicons name={isRecording ? "stop" : "mic"} size={24} color="#ffffff" />
-              </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSend} style={styles.button}>
+        <View style={styles.inputSection}>
+          <TouchableOpacity onPress={toggleRecording} style={styles.micButton}>
+            <LinearGradient
+              colors={['#ff0000', '#8b0000']}
+              style={styles.gradientMicButton}
+            >
+              <Ionicons name={isRecording ? "stop" : "mic"} size={36} color="#ffffff" />
+            </LinearGradient>
+          </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Type a message..."
+              placeholderTextColor="#999"
+            />
+            <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
               <LinearGradient
                 colors={['#4c669f', '#3b5998', '#192f6a']}
-                style={styles.gradientButton}
+                style={styles.gradientSendButton}
               >
                 <Ionicons name="send" size={24} color="#ffffff" />
               </LinearGradient>
             </TouchableOpacity>
-            {/* <TouchableOpacity onPress={handleCall} style={styles.button}>
-              <LinearGradient
-                colors={['#4CAF50', '#45a049']}
-                style={styles.gradientButton}
-              >
-                <Ionicons name="call" size={24} color="#ffffff" />
-              </LinearGradient>
-            </TouchableOpacity> */}
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -277,13 +293,25 @@ const styles = StyleSheet.create({
   botMessageText: {
     color: '#ffffff', // White text for bot messages
   },
-  inputContainer: {
-    flexDirection: 'row',
+  inputSection: {
     padding: 10,
     backgroundColor: '#000',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+  },
+  micButton: {
+    marginBottom: 10,
+  },
+  gradientMicButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
   },
   textInput: {
     flex: 1,
@@ -295,19 +323,18 @@ const styles = StyleSheet.create({
     marginRight: 10,
     color: '#fff',
   },
-  buttonContainer: {
-    flexDirection: 'row',
-  },
-  button: {
+  sendButton: {
     width: 40,
     height: 40,
-    marginLeft: 5,
   },
-  gradientButton: {
+  gradientSendButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  audioIcon: {
+    marginRight: 10,
+  }
 });
