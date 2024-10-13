@@ -43,7 +43,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 openAIclient = openai.OpenAI()
 
-client_mongo = MongoClient("mongodb://159.203.159.222:27017/")
+client_mongo = MongoClient("mongodb://localhost:27017/")
 db = client_mongo["main_db"]
 user_info = db["user_info"]
 user_data = db["user_data"]
@@ -224,13 +224,47 @@ def add_goal_api(user_id):
     recursive_objectid_destroyer(new_goal)
     return jsonify(new_goal), 201
 
-@app.route('/api/goals/<goal_id>', methods=['PATCH'])
-def update_goal_api(goal_id):
-    data = request.json
-    update_goal(goal_id, data)
-    updated_goal = user_data.find_one({"_id": ObjectId(goal_id)})
-    updated_goal = recursive_objectid_destroyer(updated_goal)
-    return jsonify(updated_goal), 200
+@app.route('/api/goals/<goal_id>/complete', methods=['POST'])
+def complete_goal_api(goal_id):
+    try:
+        # Validate and convert goal_id to ObjectId
+        goal_obj_id = ObjectId(goal_id)
+    except Exception as e:
+        return jsonify({"error": "Invalid goal_id format."}), 400
+
+    # Find the goal in the database
+    goal = user_data.find_one({"_id": goal_obj_id, "type": "goal"})
+    if not goal:
+        return jsonify({"error": "Goal not found."}), 404
+
+    if goal.get("completed", False):
+        return jsonify({"message": "Goal is already completed."}), 200
+
+    # Update the goal's 'completed' status to True
+    update_goal(goal_id, {"completed": True, "last_updated": int(datetime.utcnow().timestamp() * 1000)})
+
+    # Create a 'goal_completion' timeline item
+    goal_completion_item = {
+        "user_id": goal["user_id"],
+        "type": "goal_completion",
+        "goal_id": goal_obj_id,
+        "task": goal["text"],
+        "completed": True,
+        "timestamp": int(datetime.utcnow().timestamp() * 1000)
+    }
+
+    # Insert the 'goal_completion' item into the user_data collection
+    inserted = user_data.insert_one(goal_completion_item)
+
+    # Fetch the updated goal
+    updated_goal = user_data.find_one({"_id": goal_obj_id})
+    recursive_objectid_destroyer(updated_goal)
+
+    return jsonify({
+        "message": "Goal marked as completed.",
+        "goal": updated_goal,
+        "goal_completion_id": str(inserted.inserted_id)
+    }), 200
 
 #--------------------------------------------------------------
 

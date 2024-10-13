@@ -3,8 +3,23 @@ import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import { getGoals, addGoal, updateGoal, getTimeline, addNote } from '../api'; // Adjust the path as necessary
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import {
+  getGoals,
+  addGoal,
+  completeGoal, // Imported the new function
+  getTimeline,
+  addNote,
+} from '../api'; // Adjust the path as necessary
 import { format } from 'date-fns';
 import GoalItem from './GoalItem';
 import TimelineItem from './TimelineItem';
@@ -21,7 +36,7 @@ const determineGoalStatus = (goal) => {
   return goal.completed ? 'Completed' : 'In Progress';
 };
 
-function Dashboard({ userId }) { // Assume userId is passed as a prop
+function Dashboard({ userId }) {
   // Goals State
   const [goals, setGoals] = useState([]);
   const [newGoal, setNewGoal] = useState('');
@@ -37,6 +52,7 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
   const [note, setNote] = useState('');
   const [loadingTimeline, setLoadingTimeline] = useState(true);
   const [errorTimeline, setErrorTimeline] = useState(null);
+  const [selectedMood, setSelectedMood] = useState(3);
 
   // Fetch Goals from Backend
   useEffect(() => {
@@ -93,22 +109,39 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
     }
   };
 
+  // Handle Toggling Goal Completion
   const handleToggleGoal = async (goalId) => {
     try {
-      const updatedGoal = goals.find((goal) => goal._id === goalId);
-      if (!updatedGoal) {
+      const goal = goals.find((g) => g._id === goalId);
+      if (!goal) {
         console.error(`Goal with ID ${goalId} not found.`);
         return;
       }
-      const updatedData = { completed: !updatedGoal.completed, last_updated: new Date().toISOString() };
-      await updateGoal(goalId, updatedData);
-      setGoals((prevGoals) =>
-        prevGoals.map((goal) =>
-          goal._id === goalId ? { ...goal, ...updatedData } : goal
-        )
-      );
+
+      if (!goal.completed) {
+        // If goal is not completed, mark it as completed using the new endpoint
+        const response = await completeGoal(goalId);
+        const updatedGoal = response.data.goal;
+        updatedGoal._id = goalId; // Restore the original goal ID
+        updatedGoal.type = 'goal_completion'; // Ensure type aligns with your data handling
+        updatedGoal.timestamp = Date.now(); // Already in milliseconds
+        updatedGoal.task = goal.text; // Example, adjust as needed
+        updatedGoal.status = 'Completed'; // Example, adjust as needed
+
+        // Update the goals state
+        setGoals((prevGoals) =>
+          prevGoals.map((g) => (g._id === goalId ? { ...g, completed: updatedGoal.completed } : g))
+        );
+
+        // Optionally, refresh the timeline to include the new goal_completion item
+        setTimeline((prevTimeline) => [updatedGoal, ...prevTimeline]);
+      } else {
+        // If goal is already completed and you want to allow uncompleting, implement accordingly
+        // For now, we'll just prevent unmarking
+        console.log('Goal is already completed.');
+      }
     } catch (error) {
-      console.error('Error updating goal:', error);
+      console.error('Error completing goal:', error);
     }
   };
 
@@ -157,9 +190,9 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
       title: { display: true, text: 'Mood Tracker', font: { size: 18 } },
     },
     scales: {
-      y: { 
-        beginAtZero: true, 
-        max: 5, 
+      y: {
+        beginAtZero: true,
+        max: 5,
         ticks: { stepSize: 1 },
         title: {
           display: true,
@@ -219,32 +252,46 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
       </div>
 
       {/* Mood Tracker Section */}
-      <div>
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">Mood Tracker</h2>
-        <div className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
-          <div className="mb-4">
-            <button
-              onClick={() => {
-                const today = new Date();
-                const formattedDate = today.toISOString().split('T')[0];
-                const mood = Math.floor(Math.random() * 5) + 1; // Replace with actual mood input
-                setMoodData((prevMoodData) => [...prevMoodData, { date: formattedDate, mood }]);
-              }}
-              className="px-4 py-2 bg-gradient-to-tr from-primary-light to-secondary text-white rounded-md hover:opacity-90 transition-opacity"
-            >
-              Log Today's Mood
-            </button>
-          </div>
-          <div className="h-64">
-            <Line data={chartData} options={chartOptions} />
-          </div>
+      <div className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+        <h3 className="text-xl font-semibold mb-4">Log Your Mood</h3>
+        <div className="flex items-center space-x-4 mb-4">
+          <label htmlFor="mood-select" className="text-gray-700">
+            Select Mood Level:
+          </label>
+          <select
+            id="mood-select"
+            value={selectedMood}
+            onChange={(e) => setSelectedMood(parseInt(e.target.value))}
+            className="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-light"
+          >
+            <option value={1}>1 - Very Sad</option>
+            <option value={2}>2 - Sad</option>
+            <option value={3}>3 - Neutral</option>
+            <option value={4}>4 - Happy</option>
+            <option value={5}>5 - Very Happy</option>
+          </select>
+        </div>
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              const today = new Date();
+              const formattedDate = today.toISOString().split('T')[0];
+              setMoodData((prevMoodData) => [...prevMoodData, { date: formattedDate, mood: selectedMood }]);
+            }}
+            className="px-4 py-2 bg-gradient-to-tr from-primary-light to-secondary text-white rounded-md hover:opacity-90 transition-opacity"
+          >
+            Log Mood
+          </button>
+        </div>
+        <div className="h-64">
+          <Line data={chartData} options={chartOptions} />
         </div>
       </div>
 
       {/* Timeline Section */}
       <div>
         <h2 className="text-3xl font-bold text-gray-800 mb-6">Timeline</h2>
-        
+
         {/* Add Note */}
         <div className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg mb-6">
           <h3 className="text-xl font-semibold mb-4">Add a Note</h3>
@@ -285,7 +332,12 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
             ) : (
               timeline
                 .filter((item) => {
-                  const itemDate = new Date(item.timestamp);
+                  var itemDate;
+                  try {
+                    itemDate = new Date(item.timestamp);
+                  } catch {
+                    itemDate = new Date();
+                  }
                   const selected = new Date(selectedDate);
                   return (
                     itemDate.getFullYear() === selected.getFullYear() &&
@@ -293,7 +345,15 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
                     itemDate.getDate() === selected.getDate()
                   );
                 })
-                .map((item) => <TimelineItem key={item._id} item={item} />)
+                .map((item) => {
+                  let itemId;
+                  try {
+                    itemId = item._id;
+                  } catch {
+                    itemId = Math.random().toString(36).substr(2, 9); // Generate a random ID
+                  }
+                  return <TimelineItem key={itemId} item={item} />;
+                })
             )}
           </div>
         </div>

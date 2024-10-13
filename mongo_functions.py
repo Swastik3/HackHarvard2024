@@ -7,7 +7,7 @@ from datetime import datetime
 import time
 from bson import ObjectId
 
-client = MongoClient("mongodb://159.203.159.222:27017/")
+client = MongoClient("mongodb://localhost:27017/")
 db = client["main_db"]
 
 user_info = db["user_info"]

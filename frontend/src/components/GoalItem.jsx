@@ -16,8 +16,16 @@ function GoalItem({ goal, onToggle }) {
       <input
         type="checkbox"
         checked={goal.completed}
-        onChange={() => onToggle(goal._id)} // Corrected here
+        onChange={() => onToggle(goal._id)}
         className="form-checkbox h-5 w-5 text-primary-light rounded focus:ring-primary-light"
+        disabled={status === 'Completed' || status === 'Expired'} // Disable checkbox if completed or expired
+        title={
+          status === 'Completed'
+            ? 'Goal already completed'
+            : status === 'Expired'
+            ? 'Goal has expired'
+            : 'Mark as completed'
+        }
       />
       <span className={`flex-grow ${goal.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
         {goal.text}

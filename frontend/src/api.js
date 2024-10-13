@@ -12,5 +12,7 @@ export const updateGoal = (goalId, updatedData) => axios.patch(`${API_BASE_URL}/
 
 export const getTimeline = (userId) => axios.get(`${API_BASE_URL}/timeline/1`);
 export const addNote = (userId, noteData) => axios.post(`${API_BASE_URL}/notes`, { user_id: 1, ...noteData });
+export const completeGoal = (goalId) => axios.post(`${API_BASE_URL}/goals/${goalId}/complete`);
+
 
 // Add more API functions as needed
