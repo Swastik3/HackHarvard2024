@@ -25,8 +25,8 @@ function Sidebar() {
       </h1>
       <nav className="flex flex-col gap-4 text-white">
         <NavLink to="/">Dashboard</NavLink>
-        <NavLink to="/voicebot">Chat with AI</NavLink>
-        <NavLink to="/chatbot">Find your community</NavLink>
+        <NavLink to="/voicebot">Apollo</NavLink>
+        <NavLink to="/chatbot">Connect</NavLink>
         <NavLink to="/chats">Your Chats</NavLink>
         <NavLink to="/emergency">Emergency</NavLink>
         <NavLink to="/upload">Upload</NavLink>

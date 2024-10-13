@@ -37,7 +37,7 @@ function App() {
           <Routes>
             <Route path="/chatbot" element={
               <div>
-                <h1 className="text-4xl font-bold mb-6 text-center text-gray-800">Mental Health Support</h1>
+                <h1 className="text-4xl font-bold mb-6 text-center text-gray-800">Build your SafeSpace</h1>
                 <ChatBot onCreateChat={handleCreateChat} />
               </div>
             } />
