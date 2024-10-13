@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-route
 import Sidebar from './components/SideBar';
 import ChatBot from './components/ChatBot';
 import Chats from './components/Chats';
+import VoiceBot from './components/VoiceBot';
 import PersonalGoals from './components/PersonalGoals';
 import Community from './components/Community';
 import './index.css';
@@ -49,6 +50,7 @@ function App() {
                 />
               </div>
             } />
+            <Route path="/VoiceBot" element={<VoiceBot />} />
             <Route path="/goals" element={<PersonalGoals />} />
             <Route path="/community" element={<Community />} />
           </Routes>

@@ -6,6 +6,15 @@ module.exports = {
   ],
   theme: {
     extend: {
+      animation: {
+        soundwave: 'soundwave 0.5s infinite alternate',
+      },
+      keyframes: {
+        soundwave: {
+          '0%': { height: '10%' },
+          '100%': { height: '100%' },
+        },
+      },
       colors: {
         primary: {
           light: '#4a90e2',

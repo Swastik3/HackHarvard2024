@@ -27,7 +27,9 @@ function Sidebar() {
         <NavLink to="/">Chat with AI</NavLink>
         <NavLink to="/chats">Your Chats</NavLink>
         <NavLink to="/goals">Personal Goals</NavLink>
+        <NavLink to="/VoiceBot">VoiceBot</NavLink>
         <NavLink to="/community">Community</NavLink>
+
       </nav>
     </div>
   );
