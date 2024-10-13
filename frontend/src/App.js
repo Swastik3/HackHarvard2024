@@ -4,7 +4,7 @@ import Sidebar from './components/SideBar';
 import ChatBot from './components/ChatBot';
 import Chats from './components/Chats';
 import PersonalGoals from './components/PersonalGoals';
-import Community from './components/Community';
+import SeekHelpPage from './components/SeekHelpPage';
 import './index.css';
 
 function App() {
@@ -50,7 +50,7 @@ function App() {
               </div>
             } />
             <Route path="/goals" element={<PersonalGoals />} />
-            <Route path="/community" element={<Community />} />
+            <Route path="/seekhelp" element={<SeekHelpPage />} />
           </Routes>
         </div>
       </div>
