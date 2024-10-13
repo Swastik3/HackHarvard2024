@@ -96,12 +96,12 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
   // Handle Toggling Goal Completion
   const handleToggleGoal = async (goalId) => {
     try {
-      const updatedGoal = goals.find((goal) => goal.id === goalId);
+      const updatedGoal = goals.find((goal) => goal._id === goalId);
       const updatedData = { completed: !updatedGoal.completed, last_updated: new Date().toISOString() };
       await updateGoal(goalId, updatedData);
       setGoals((prevGoals) =>
         prevGoals.map((goal) =>
-          goal.id === goalId ? { ...goal, ...updatedData } : goal
+          goal._id === goalId ? { ...goal, ...updatedData } : goal
         )
       );
     } catch (error) {
@@ -113,12 +113,14 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
   const handleAddNote = async () => {
     if (note.trim()) {
       try {
+        // For demonstration, we'll set sentiment and mood to 'NEUTRAL' and 'CALM' respectively.
+        // In a real application, these values should be determined based on user input or analysis.
         const noteData = {
           content: note,
-          summary: '', // Optionally, process summary
-          sentiment: 0, // Optionally, determine sentiment
-          mood: 0, // Optionally, determine mood
-          type: 'note',
+          summary: 'User added a new note.',
+          sentiment: 'NEUTRAL', // Example, adjust as needed
+          mood: 'CALM', // Example, adjust as needed
+          type: 'notes', // Ensure type aligns with your data handling
           timestamp: Date.now(), // Already in milliseconds
         };
         const response = await addNote(userId, noteData);
@@ -132,7 +134,7 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
 
   // Prepare Chart Data
   const chartData = {
-    labels: moodData.map((d) => d.date),
+    labels: moodData.map((d) => format(new Date(d.date), 'MM/dd/yyyy')),
     datasets: [
       {
         label: 'Mood',
@@ -152,7 +154,21 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
       title: { display: true, text: 'Mood Tracker', font: { size: 18 } },
     },
     scales: {
-      y: { beginAtZero: true, max: 5, ticks: { stepSize: 1 } },
+      y: { 
+        beginAtZero: true, 
+        max: 5, 
+        ticks: { stepSize: 1 },
+        title: {
+          display: true,
+          text: 'Mood Level',
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Date',
+        },
+      },
     },
   };
 
@@ -192,7 +208,7 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
           ) : (
             <ul className="space-y-4">
               {goals.map((goal) => (
-                <GoalItem key={goal.id} goal={goal} onToggle={handleToggleGoal} />
+                <GoalItem key={goal._id} goal={goal} onToggle={handleToggleGoal} />
               ))}
             </ul>
           )}
@@ -206,9 +222,10 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
           <div className="mb-4">
             <button
               onClick={() => {
-                const today = new Date().toISOString().split('T')[0];
+                const today = new Date();
+                const formattedDate = today.toISOString().split('T')[0];
                 const mood = Math.floor(Math.random() * 5) + 1; // Replace with actual mood input
-                setMoodData((prevMoodData) => [...prevMoodData, { date: today, mood }]);
+                setMoodData((prevMoodData) => [...prevMoodData, { date: formattedDate, mood }]);
               }}
               className="px-4 py-2 bg-gradient-to-tr from-primary-light to-secondary text-white rounded-md hover:opacity-90 transition-opacity"
             >
@@ -246,9 +263,9 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
         </div>
 
         {/* Calendar and Timeline */}
-        <div className="flex space-x-8">
+        <div className="flex flex-col lg:flex-row lg:space-x-8">
           {/* Calendar View */}
-          <div className="w-1/3">
+          <div className="w-full lg:w-1/3 mb-8 lg:mb-0">
             <Calendar
               onChange={setSelectedDate}
               value={selectedDate}
@@ -257,7 +274,7 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
           </div>
 
           {/* Timeline Display */}
-          <div className="w-2/3">
+          <div className="w-full lg:w-2/3">
             {loadingTimeline ? (
               <p>Loading timeline...</p>
             ) : errorTimeline ? (
@@ -273,7 +290,7 @@ function Dashboard({ userId }) { // Assume userId is passed as a prop
                     itemDate.getDate() === selected.getDate()
                   );
                 })
-                .map((item) => <TimelineItem key={item.id} item={item} />)
+                .map((item) => <TimelineItem key={item._id} item={item} />)
             )}
           </div>
         </div>

@@ -3,6 +3,79 @@ import React from 'react';
 import { format } from 'date-fns';
 
 function TimelineItem({ item }) {
+  // Format the timestamp (assuming it's in milliseconds)
+  const formattedTime = format(new Date(item.timestamp), 'PPpp'); // Example: Jan 1, 2024, 10:00 PM
+
+  // Function to render content based on its type
+  const renderContent = () => {
+    if (typeof item.content === 'string') {
+      return <p className="mt-2 text-gray-800"><strong>Content:</strong> {item.content}</p>;
+    } else if (Array.isArray(item.content)) {
+      return (
+        <div className="mt-2 text-gray-800">
+          <strong>Conversation:</strong>
+          <ul className="list-disc list-inside mt-1">
+            {item.content.map((msg, index) => (
+              <li key={index}>
+                <strong>{msg.sender}:</strong> {msg.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    } else if (item.type === 'goal_completion') {
+      return (
+        <div className="mt-2 text-gray-800">
+          <strong>Task:</strong> {item.task}
+          <br />
+          <strong>Status:</strong> {item.completed ? 'Completed' : 'Incomplete'}
+        </div>
+      );
+    } else if (item.type === 'emergency_call') {
+      return (
+        <div className="mt-2 text-gray-800">
+          <strong>Hotline Called:</strong> {item.hotline_called}
+        </div>
+      );
+    } else if (item.type === 'connection_added') {
+      return (
+        <div className="mt-2 text-gray-800">
+          <strong>Connection Name:</strong> {item.connection_name}
+        </div>
+      );
+    } else {
+      return <p className="mt-2 text-gray-800"><strong>Content:</strong> Unsupported content type.</p>;
+    }
+  };
+
+  // Function to determine the CSS class for sentiment
+  const getSentimentClass = () => {
+    if (!item.sentiment) return 'bg-gray-100 text-gray-800';
+    switch(item.sentiment.toLowerCase()) {
+      case 'positive':
+        return 'bg-green-100 text-green-800';
+      case 'negative':
+        return 'bg-red-100 text-red-800';
+      case 'neutral':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Function to determine the CSS class for mood
+  const getMoodClass = () => {
+    if (!item.mood) return 'bg-gray-100 text-gray-800';
+    const moodLower = item.mood.toLowerCase();
+    if (['very happy', 'happy', 'relaxed', 'centered', 'calm'].includes(moodLower)) {
+      return 'bg-green-100 text-green-800';
+    } else if (['anxious'].includes(moodLower)) {
+      return 'bg-yellow-100 text-yellow-800';
+    } else {
+      return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <div className="flex items-start mb-8 relative">
       {/* Connector Line and Dot */}
@@ -14,25 +87,30 @@ function TimelineItem({ item }) {
       {/* Timeline Item */}
       <div className="ml-12 bg-white rounded-xl shadow-md p-6 w-full">
         <div className="flex items-center justify-between mb-2">
-          <span className="font-semibold text-gray-700 capitalize">{item.type}</span>
-          <span className="text-sm text-gray-500">{format(new Date(item.timestamp * 1000), 'p')}</span>
+          <span className="font-semibold text-gray-700 capitalize">{item.type.replace(/_/g, ' ')}</span>
+          <span className="text-sm text-gray-500">{formattedTime}</span>
         </div>
-        <div className="flex space-x-4 mb-2">
-          <span
-            className={`px-2 py-1 text-xs font-semibold rounded ${
-              item.sentiment > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}
-          >
-            Sentiment: {item.sentiment}
-          </span>
-          <span
-            className={`px-2 py-1 text-xs font-semibold rounded ${
-              item.mood > 3 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-            }`}
-          >
-            Mood: {item.mood}
-          </span>
-        </div>
+
+        {/* Sentiment and Mood Badges */}
+        {(item.sentiment || item.mood) && (
+          <div className="flex space-x-4 mb-2">
+            {item.sentiment && (
+              <span
+                className={`px-2 py-1 text-xs font-semibold rounded ${getSentimentClass()}`}
+              >
+                Sentiment: {item.sentiment}
+              </span>
+            )}
+            {item.mood && (
+              <span
+                className={`px-2 py-1 text-xs font-semibold rounded ${getMoodClass()}`}
+              >
+                Mood: {item.mood}
+              </span>
+            )}
+          </div>
+        )}
+
         <div>
           <details className="group">
             <summary className="cursor-pointer text-blue-600 hover:underline">Summary & Takeaways</summary>
@@ -41,7 +119,7 @@ function TimelineItem({ item }) {
               <p><strong>Takeaways:</strong> {item.takeaways || 'No takeaways available.'}</p>
             </div>
           </details>
-          <p className="mt-2 text-gray-800"><strong>Content:</strong> {item.content}</p>
+          {renderContent()}
         </div>
       </div>
     </div>
