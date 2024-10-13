@@ -3,9 +3,12 @@ import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-route
 import Sidebar from './components/SideBar';
 import ChatBot from './components/ChatBot';
 import Chats from './components/Chats';
-import VoiceBot from './components/VoiceBot';
 import PersonalGoals from './components/PersonalGoals';
 import Community from './components/Community';
+import Dashboard from './components/Dashboard';
+import Community from './components/ChatbotCommunity';
+import Emergency from './components/Emergency';
+import VoiceBot from './components/VoiceBot';
 import './index.css';
 
 function App() {
@@ -34,7 +37,7 @@ function App() {
         <Sidebar />
         <div className="flex-grow ml-64 p-8 max-h-screen overflow-y-auto">
           <Routes>
-            <Route path="/" element={
+            <Route path="/voicebot" element={
               <div>
                 <h1 className="text-4xl font-bold mb-6 text-center text-gray-800">Mental Health Support</h1>
                 <ChatBot onCreateChat={handleCreateChat} />
@@ -50,9 +53,11 @@ function App() {
                 />
               </div>
             } />
-            <Route path="/VoiceBot" element={<VoiceBot />} />
-            <Route path="/goals" element={<PersonalGoals />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/emergency" element={<Emergency />} />
+            <Route path="/chatbot" element={<Community />} />
+            <Route path="/VoiceBot" element={<VoiceBot />} />
+            <Route path="/" element={<Dashboard />} />
           </Routes>
         </div>
       </div>

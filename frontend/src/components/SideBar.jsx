@@ -24,12 +24,13 @@ function Sidebar() {
         HealthCare App
       </h1>
       <nav className="flex flex-col gap-4 text-white">
-        <NavLink to="/">Chat with AI</NavLink>
+        <NavLink to="/">Dashboard</NavLink>
+        <NavLink to="/VoiceBot">Chat with AI</NavLink>
+        <NavLink to="/chatbot">Find your community</NavLink>
         <NavLink to="/chats">Your Chats</NavLink>
         <NavLink to="/goals">Personal Goals</NavLink>
-        <NavLink to="/VoiceBot">VoiceBot</NavLink>
         <NavLink to="/community">Community</NavLink>
-
+        <NavLink to="/emergency">Emergency</NavLink>
       </nav>
     </div>
   );
