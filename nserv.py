@@ -41,8 +41,8 @@ def update():
     
     return {"message": "success"}
 
-@app.route('/process_audio', methods=['POST'])
-def process_audio():
+@app.route('/process_nsp', methods=['POST'])
+def process_nsp():
     cleanup_old_files()
     if 'audio' not in request.files:
         app.logger.error("No audio file in request")

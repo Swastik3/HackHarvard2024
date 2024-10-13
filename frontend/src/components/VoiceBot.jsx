@@ -112,7 +112,7 @@ const VoiceBot = () => {
     formData.append('audio', audioBlob, 'input.webm');
 
     try {
-      const response = await fetch('http://localhost:8000/process_audio', {
+      const response = await fetch('http://localhost:8000/process_nsp', {
         method: 'POST',
         body: formData,
       });
