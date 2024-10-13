@@ -393,13 +393,15 @@ Retrieve all prescriptions for the user.
         "description": "Take medication A",
         "frequency": "daily",
         "checked": false,
-        "expiry": "2024-12-31"
+        "expiry": "2024-12-31",
+        "last_updated": "2024-05-15T08:00:00Z"
       },
       {
         "description": "Attend therapy session",
         "frequency": "weekly",
         "checked": true,
-        "expiry": "2024-11-30"
+        "expiry": "2024-11-30",
+        "last_updated": "2024-05-15T08:00:00Z"
       }
     ],
     "created_at": "2024-04-27T12:34:56Z",
@@ -413,7 +415,8 @@ Retrieve all prescriptions for the user.
         "description": "Meditate for 10 minutes",
         "frequency": "daily",
         "checked": false,
-        "expiry": "2024-10-31"
+        "expiry": "2024-10-31",
+        "last_updated": "2024-05-15T08:00:00Z"
       }
     ],
     "created_at": "2024-05-01T08:20:00Z",
