@@ -1,0 +1,111 @@
+[
+    {
+        "_id": ObjectId("670b57df3ed5cf079444ad57"),
+        "user_id": 1,
+        "type": "goal",
+        "text": "Take Calmvera 10 mg",
+        "details": {
+            "dosage": "Take one tablet orally twice daily after meals.",
+            "quantity": "60 tablets",
+            "refills": 1
+        },
+        "completed": False,
+        "frequency": "daily",
+        "created_at": 1727932639.147198,
+        "last_updated": 1728796639.14723,
+        "expiry": 1733980639.147216,
+        "prescription_id": ObjectId("670b57df3ed5cf079444ad55")
+    },
+    {
+        "_id": ObjectId("670b57df3ed5cf079444ad58"),
+        "user_id": 1,
+        "type": "goal",
+        "text": "Take Restwell XR 50 mg",
+        "details": {
+            "dosage": "Take one capsule orally at bedtime.",
+            "quantity": "30 capsules",
+            "refills": 1
+        },
+        "completed": False,
+        "frequency": "daily",
+        "created_at": 1727932639.147198,
+        "last_updated": 1728796639.14723,
+        "expiry": 1733980639.147216,
+        "prescription_id": ObjectId("670b57df3ed5cf079444ad55")
+    },
+    {
+        "_id": ObjectId("670b57df3ed5cf079444ad59"),
+        "user_id": 1,
+        "type": "goal",
+        "text": "Attend Cognitive Behavioral Therapy (CBT) Sessions",
+        "details": {
+            "description": "Attend weekly Cognitive Behavioral Therapy (CBT) sessions with a licensed therapist."
+        },
+        "completed": False,
+        "frequency": "weekly",
+        "created_at": 1727932639.147198,
+        "last_updated": 1728796639.14723,
+        "expiry": 1733980639.147216,
+        "prescription_id": ObjectId("670b57df3ed5cf079444ad55")
+    },
+    {
+        "_id": ObjectId("670b57df3ed5cf079444ad5a"),
+        "user_id": 1,
+        "type": "goal",
+        "text": "Daily Mindfulness Meditation",
+        "details": {
+            "description": "Engage in daily mindfulness meditation for at least 15 minutes."
+        },
+        "completed": False,
+        "frequency": "weekly",
+        "created_at": 1727932639.147198,
+        "last_updated": 1728796639.14723,
+        "expiry": 1733980639.147216,
+        "prescription_id": ObjectId("670b57df3ed5cf079444ad55")
+    },
+    {
+        "_id": ObjectId("670b57df3ed5cf079444ad5b"),
+        "user_id": 1,
+        "type": "goal",
+        "text": "Physical Exercise",
+        "details": {
+            "description": "Participate in moderate physical activity (e.g., walking, yoga) for 30 minutes, at least 5 days a week."
+        },
+        "completed": False,
+        "frequency": "weekly",
+        "created_at": 1727932639.147198,
+        "last_updated": 1728796639.14723,
+        "expiry": 1733980639.147216,
+        "prescription_id": ObjectId("670b57df3ed5cf079444ad55")
+    },
+    {
+        "_id": ObjectId("670b57df3ed5cf079444ad5c"),
+        "user_id": 1,
+        "type": "goal",
+        "text": "Establish Sleep Hygiene",
+        "details": {
+            "description": "Establish a regular sleep schedule aiming for 7-9 hours of quality sleep per night."
+        },
+        "completed": False,
+        "frequency": "weekly",
+        "created_at": 1727932639.147198,
+        "last_updated": 1728796639.14723,
+        "expiry": 1733980639.147216,
+        "prescription_id": ObjectId("670b57df3ed5cf079444ad55")
+    },
+    {
+        "_id": ObjectId("670b57df3ed5cf079444ad5d"),
+        "user_id": 1,
+        "type": "goal",
+        "text": "Daily Journaling",
+        "details": {
+            "description": "Write in a journal daily to reflect on thoughts and emotions."
+        },
+        "completed": False,
+        "frequency": "weekly",
+        "created_at": 1727932639.147198,
+        "last_updated": 1728796639.14723,
+        "expiry": 1733980639.147216,
+        "prescription_id": ObjectId("670b57df3ed5cf079444ad55")
+    }
+]

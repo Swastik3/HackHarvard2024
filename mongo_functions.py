@@ -5,6 +5,7 @@ from takeaways import get_takeaways
 from mood import get_mood
 from datetime import datetime
 import time
+from bson import ObjectId
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client["main_db"]
@@ -73,3 +74,24 @@ def add_connection(user_id, connection_name, connection_user_id):
 
 def add_prescription(prescription):
     prescriptions.insert_one(prescription)
+
+def get_goals(user_id):
+    query = {"user_id": user_id, "type": "goal"}
+    goals = user_data.find(query)
+    return list(goals)
+
+def add_goal(user_id, goal):
+    goal_data = {
+        "user_id": user_id,
+        "type": "goal",
+        "text": goal["text"],
+        "completed": goal.get("completed", False),
+        "frequency": goal.get("frequency", "daily"),
+        "created_at": goal.get("created_at", datetime.utcnow()),
+        "last_updated": goal.get("last_updated", datetime.utcnow()),
+        "expiry": goal.get("expiry"),
+    }
+    return user_data.insert_one(goal_data)
+
+def update_goal(goal_id, updated_data):
+    user_data.update_one({"_id": ObjectId(goal_id)}, {"$set": updated_data})
