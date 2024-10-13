@@ -12,7 +12,8 @@ import string
 import google.generativeai as genai
 
 nltk.download('words')
-
+nltk.download('punkt_tab')
+nltk.download('punkt')
 def extract_pdf_content(file_path, image_output_dir):
     # Open the PDF file
     pdf_document = fitz.open(file_path)

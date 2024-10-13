@@ -146,7 +146,7 @@ export default function HomeScreen() {
       setInputText('');
       try {
         console.log("sending the request")
-        const response = await fetch(`http://localhost:8000/process_text`, {
+        const response = await fetch(`${serverIp}/process_text`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

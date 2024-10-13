@@ -474,6 +474,7 @@ async def process_pdf():
         content = ocr_results + "\n" + text_content
         return jsonify({"result": content}), 200
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)})
 
 if __name__ == '__main__':

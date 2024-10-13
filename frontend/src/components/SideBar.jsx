@@ -21,7 +21,7 @@ function Sidebar() {
   return (
     <div className="w-64 h-screen fixed left-0 top-0 bg-gradient-to-b from-primary-light to-secondary p-8 shadow-lg">
       <h1 className="text-2xl font-bold text-white text-center mb-8 pb-4 border-b-2 border-white/20">
-        HealthCare App
+        SafeSpace
       </h1>
       <nav className="flex flex-col gap-4 text-white">
         <NavLink to="/">Dashboard</NavLink>
