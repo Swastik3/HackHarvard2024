@@ -10,6 +10,7 @@ import numpy as np
 import asyncio
 import websockets
 import pyaudio  # Import pyaudio for real-time audio playback
+import requests
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -40,7 +41,6 @@ load_dotenv()
 # ==========================
 
 # Instruction for OpenAI model
-instruction = "Respond like an psychiatrist."
 
 # Replace with your actual WebSocket URL
 WEBSOCKET_URL = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01"
@@ -106,17 +106,38 @@ def on_open(ws):
     print("WebSocket opened")
     
     # Step 1: Send session.update event to configure the session
+    
+    timeline = requests.get(r"http://159.203.159.222:8765/api/timeline/1").json()
+    prescription = requests.get(r"http://159.203.159.222:8765/api/prescription/1").json()
+    prompt = """
+    You are a mental health advisor/psychiatrist. You are provided with a timeline of a patient's mental health journey.
+    In addition to that, you also have access to patient's goal setting, notes, and prescriptions.
+    Your task is to talk with the patient and provide them with the necessary advice and support.
+    Make sure to ask about what they did during the day, how they are feeling, and if they have any concerns.
+    Do not forget to ask about their medications and their progress on the goals they set.
+    
+    Timeline:
+    {timeline}
+    
+    Prescription:
+    {prescription}
+    """.format(timeline=timeline, prescription=prescription)
+    
+    print(f"Prompt: {prompt}")
+    
     session_update_event = {
         "event_id": generate_event_id(),
         "type": "session.update",
         "session": {
             "modalities": ["text", "audio"],
-            "instructions": instruction,
+            "instructions": str(prompt),
             "voice": "alloy",
             "input_audio_format": "pcm16",
             "output_audio_format": "pcm16", 
             "turn_detection": {
                 "type": "server_vad",
+                "threshold": 0.6,
+                "prefix_padding_ms": 300
             },
             "tools": [],
             "tool_choice": "auto",
@@ -124,30 +145,6 @@ def on_open(ws):
         }
     }
     ws.send(json.dumps(session_update_event))
-
-    # Step 3: Send input_audio_buffer.commit event to commit the audio data
-    input_audio_buffer_commit_event = {
-        "event_id": generate_event_id(),
-        "type": "input_audio_buffer.commit"
-    }
-    ws.send(json.dumps(input_audio_buffer_commit_event))
-    
-    # Step 4: Send response.create event to trigger response generation
-    response_create_event = {
-        "event_id": generate_event_id(),
-        "type": "response.create",
-        "response": {
-            "modalities": ["audio", "text"],
-            "instructions": instruction,
-            "voice": "alloy",
-            "output_audio_format": "pcm16",
-            "tools": [],
-            "tool_choice": "auto",
-            "temperature": 0.7,
-            "max_output_tokens": 300
-        }
-    }
-    ws.send(json.dumps(response_create_event))
 
 def append_audio_buffer(ws):
     """
@@ -197,7 +194,7 @@ CORS(app, origins="*")
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # MongoDB Setup
-client_mongo = MongoClient("mongodb://localhost:27017/")
+client_mongo = MongoClient("mongodb://159.203.159.222:27017/")
 db = client_mongo["main_db"]
 
 user_info = db["user_info"]
