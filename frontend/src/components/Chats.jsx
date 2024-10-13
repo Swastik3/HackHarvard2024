@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { UserIcon, SendIcon, XIcon } from 'lucide-react';
+import { UserIcon, SendIcon, XIcon, ArrowLeftIcon } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Chats = ({ chats, onRemoveChat, onUpdateChat }) => {
   const [activeChat, setActiveChat] = useState(null);
@@ -26,9 +27,18 @@ const Chats = ({ chats, onRemoveChat, onUpdateChat }) => {
   };
 
   const renderChatList = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+    >
       {chats.map((chat) => (
-        <div key={chat.id} className="bg-white rounded-lg shadow-lg p-4 hover:shadow-xl transition-all duration-300 border border-gray-200">
+        <motion.div 
+          key={chat.id} 
+          whileHover={{ scale: 1.03 }}
+          className="bg-white rounded-xl shadow-lg p-4 transition-all duration-300 border border-gray-200"
+        >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center">
               <UserIcon className="w-8 h-8 text-blue-500 mr-2" />
@@ -41,18 +51,18 @@ const Chats = ({ chats, onRemoveChat, onUpdateChat }) => {
               <XIcon className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-sm text-gray-600 mb-2">Age: {chat.info.age}</p>
-          <p className="text-sm text-gray-600 mb-2">Issue: {chat.info.issue}</p>
-          <p className="text-sm mb-4 line-clamp-3">{chat.info.story}</p>
+          <p className="text-sm text-gray-600 mb-1">Age: {chat.info.age}</p>
+          <p className="text-sm text-gray-600 mb-1">Issue: {chat.info.issue}</p>
+          <p className="text-sm mb-4 line-clamp-3 text-gray-700">{chat.info.story}</p>
           <button
             onClick={() => setActiveChat(chat.id)}
-            className="w-full bg-green-500 text-white py-2 rounded-full hover:bg-green-600 transition-colors duration-300"
+            className="w-full bg-green-500 text-white py-2 rounded-full hover:bg-green-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
             Chat with {chat.name}
           </button>
-        </div>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 
   const renderActiveChat = () => {
@@ -60,7 +70,12 @@ const Chats = ({ chats, onRemoveChat, onUpdateChat }) => {
     if (!chat) return null;
 
     return (
-      <div className="flex flex-col h-full">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-2xl p-4"
+      >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <UserIcon className="w-8 h-8 text-blue-500 mr-2" />
@@ -68,21 +83,29 @@ const Chats = ({ chats, onRemoveChat, onUpdateChat }) => {
           </div>
           <button
             onClick={() => setActiveChat(null)}
-            className="text-gray-500 hover:text-red-500 transition-colors duration-300"
+            className="text-gray-500 hover:text-red-500 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-full p-1"
           >
-            <XIcon className="w-5 h-5" />
+            <ArrowLeftIcon className="w-5 h-5" />
           </button>
         </div>
-        <div className="flex-grow mb-4 p-4 border rounded-lg overflow-auto bg-gray-50">
-          {chat.messages.map((msg, index) => (
-            <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-2`}>
-              <div className={`rounded-lg py-2 px-4 max-w-[70%] ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
-                {msg.content}
-              </div>
-            </div>
-          ))}
+        <div className="flex-grow mb-4 p-4 rounded-xl overflow-auto bg-white shadow-inner">
+          <AnimatePresence>
+            {chat.messages.map((msg, index) => (
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} mb-2`}
+              >
+                <div className={`rounded-2xl py-2 px-4 max-w-[70%] ${msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
+                  {msg.content}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
-        <div className="flex gap-2 bg-gray-100 p-2 rounded-full">
+        <div className="flex gap-2 bg-white p-2 rounded-full shadow-md">
           <input
             type="text"
             value={input}
@@ -98,13 +121,15 @@ const Chats = ({ chats, onRemoveChat, onUpdateChat }) => {
             <SendIcon className="w-5 h-5" />
           </button>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
   return (
-    <div className="h-full">
-      {activeChat ? renderActiveChat() : renderChatList()}
+    <div className="h-[90vh] w-[90h] mx-auto overflow-hidden">
+      <AnimatePresence mode="wait">
+        {activeChat ? renderActiveChat() : renderChatList()}
+      </AnimatePresence>
     </div>
   );
 };
