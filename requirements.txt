@@ -122,3 +122,7 @@ zope.interface==7.1.0
 websocket-client
 websockets
 pyaudio
+fitz
+langchain_pinecone
+langchain_openai
+instructor

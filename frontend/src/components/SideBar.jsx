@@ -29,6 +29,7 @@ function Sidebar() {
         <NavLink to="/chatbot">Find your community</NavLink>
         <NavLink to="/chats">Your Chats</NavLink>
         <NavLink to="/emergency">Emergency</NavLink>
+        <NavLink to="/upload">Upload</NavLink>
       </nav>
     </div>
   );

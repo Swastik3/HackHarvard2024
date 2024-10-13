@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard';
 import Emergency from './components/Emergency';
 import VoiceBot from './components/VoiceBot';
 import './index.css';
+import UploadPrescription from './components/UploadPrescription';
 
 function App() {
   const [chats, setChats] = useState([]);
@@ -52,6 +53,7 @@ function App() {
             } />
             <Route path="/emergency" element={<Emergency />} />
             <Route path="/voicebot" element={<VoiceBot />} />
+            <Route path="/upload" element={<UploadPrescription />} />
             <Route path="/" element={<Dashboard />} />
           </Routes>
         </div>

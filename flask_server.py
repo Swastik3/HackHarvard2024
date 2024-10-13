@@ -9,6 +9,7 @@ from pymongo import MongoClient
 from datetime import datetime
 from dotenv import load_dotenv
 from bson import ObjectId, json_util
+from ocr import extract_pdf_content, process_images_with_ocr
 import time
 from mongo_functions import (
     get_timeline,
@@ -419,6 +420,27 @@ def recommend():
     print("------------------------")
     print(ms)
     return {"messages": ms}
+
+@app.route("/process_pdf", methods=["POST"])
+async def process_pdf():
+    try:
+        pdf_path = "temp.pdf"
+        img_path = "sample_imgs/"
+        pdf = request.files['pdf']
+        #save the pdf to a specific path 
+        pdf.save(pdf_path)
+
+        print(f"PDF Path: {pdf_path}")
+        print(f"Image Path: {img_path}")
+        text_content, num_images = extract_pdf_content(pdf_path, img_path)
+        text_content = text_content.replace("\\n", "\n")
+        ocr_results = process_images_with_ocr(img_path)
+        print(text_content)
+        print(ocr_results)
+        content = ocr_results + "\n" + text_content
+        return jsonify({"result": content}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000, host="0.0.0.0")
