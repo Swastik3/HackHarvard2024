@@ -488,6 +488,4 @@ def process_text():
     return jsonify("ai_response"), 200
 
 if __name__ == '__main__':
-    openai_thread = threading.Thread(target=initialize_openai_connection, daemon=True)
-    openai_thread.start()
     app.run(debug=True, port=8000, host="0.0.0.0")
